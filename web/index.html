@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cardputer WUI</title>
+<style>
+:root{
+  --bg:#0b0f0d; --bg-2:#0f1512; --bg-3:#141c18; --line:#1e2a24;
+  --fg:#c8e6d5; --fg-dim:#6f8c7d; --accent:#4ade80; --accent-dim:#1d6b3f;
+  --warn:#fbbf24; --err:#f87171; --blue:#60a5fa;
+  --mono:"SFMono-Regular",Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  --r:6px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 var(--mono);
+ -webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- login ---------- */
+#login{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:50}
+.card{width:min(380px,92vw);border:1px solid var(--line);background:var(--bg-2);border-radius:var(--r);padding:22px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:.06em}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.sub{color:var(--fg-dim);font-size:11.5px;margin:6px 0 18px}
+.field{display:block;margin-bottom:12px}
+.field span{display:block;color:var(--fg-dim);font-size:11px;margin-bottom:5px;letter-spacing:.08em;text-transform:uppercase}
+input[type=text],input[type=password],textarea{width:100%;background:var(--bg-3);border:1px solid var(--line);
+ border-radius:var(--r);padding:9px 10px;outline:none}
+input:focus,textarea:focus{border-color:var(--accent-dim)}
+.btn{background:var(--bg-3);border:1px solid var(--line);border-radius:var(--r);padding:7px 12px;cursor:pointer;
+ white-space:nowrap;transition:.12s}
+.btn:hover{border-color:var(--accent-dim);color:#e6fff0}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent-dim);border-color:var(--accent-dim);color:#eafff2}
+.btn.primary:hover{background:#26824d}
+.btn.danger:hover{border-color:var(--err);color:var(--err)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.msg{min-height:18px;font-size:11.5px;color:var(--err);margin-top:10px}
+
+/* ---------- shell ---------- */
+#app{display:none;height:100%;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg-2)}
+header .stats{margin-left:auto;display:flex;gap:14px;color:var(--fg-dim);font-size:11px;align-items:center}
+header .stats b{color:var(--fg);font-weight:500}
+main{flex:1;display:flex;min-height:0}
+#pane{flex:1;display:flex;flex-direction:column;min-width:0}
+.bar{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.crumbs{display:flex;align-items:center;gap:3px;flex:1;min-width:120px;overflow:auto;white-space:nowrap}
+.crumbs a{color:var(--accent);text-decoration:none;cursor:pointer;padding:2px 3px;border-radius:3px}
+.crumbs a:hover{background:var(--bg-3)}
+.crumbs i{color:var(--fg-dim);font-style:normal}
+
+#list{flex:1;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th{position:sticky;top:0;background:var(--bg-2);text-align:left;font-weight:500;color:var(--fg-dim);
+ font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 12px;border-bottom:1px solid var(--line);z-index:2}
+td{padding:6px 12px;border-bottom:1px solid #131a16;vertical-align:middle}
+tbody tr:hover{background:var(--bg-2)}
+.name{display:flex;align-items:center;gap:8px;cursor:pointer}
+.name:hover{color:#eafff2}
+.ico{color:var(--fg-dim);width:14px;display:inline-block;text-align:center}
+.ico.dir{color:var(--blue)}
+td.size,td.when{color:var(--fg-dim);font-size:11.5px;white-space:nowrap}
+td.acts{text-align:right;white-space:nowrap;opacity:0;transition:.12s}
+tr:hover td.acts{opacity:1}
+td.acts button{background:none;border:none;color:var(--fg-dim);cursor:pointer;padding:2px 5px;border-radius:3px}
+td.acts button:hover{color:var(--accent);background:var(--bg-3)}
+.empty{padding:26px 12px;color:var(--fg-dim);text-align:center}
+
+/* ---------- console ---------- */
+#console{height:216px;border-top:1px solid var(--line);background:#080b09;display:flex;flex-direction:column}
+#console.hidden{display:none}
+#grip{height:5px;cursor:ns-resize;background:transparent}
+#grip:hover{background:var(--accent-dim)}
+#out{flex:1;overflow:auto;padding:8px 12px;white-space:pre-wrap;word-break:break-word;font-size:12px}
+#out .cmd{color:var(--accent)}
+#out .err{color:var(--err)}
+#out .dim{color:var(--fg-dim)}
+#cl{display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line)}
+#cl span{color:var(--accent)}
+#cmd{flex:1;background:none;border:none;outline:none;padding:0}
+
+/* ---------- uploads ---------- */
+#jobs{position:fixed;right:14px;bottom:14px;width:min(330px,88vw);display:flex;flex-direction:column;gap:8px;z-index:30}
+.job{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);padding:9px 11px;font-size:11.5px;
+ box-shadow:0 8px 24px #0008}
+.job .row{display:flex;gap:8px;align-items:center}
+.job .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.job .pc{color:var(--fg-dim)}
+.job .track{height:3px;background:var(--bg-3);border-radius:2px;margin-top:7px;overflow:hidden}
+.job .fill{height:100%;background:var(--accent);width:0;transition:width .2s}
+.job.done .fill{background:var(--accent)}
+.job.fail .fill{background:var(--err)}
+.job button{background:none;border:none;color:var(--fg-dim);cursor:pointer}
+
+/* ---------- modal / drop ---------- */
+#drop{position:fixed;inset:0;background:#0b0f0dcc;border:2px dashed var(--accent);z-index:40;
+ display:none;place-items:center;color:var(--accent);letter-spacing:.1em}
+#drop.on{display:grid}
+#modal{position:fixed;inset:0;background:#000000b0;z-index:45;display:none;place-items:center;padding:16px}
+#modal.on{display:grid}
+.sheet{width:min(860px,96vw);max-height:90vh;display:flex;flex-direction:column;background:var(--bg-2);
+ border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.sheet header{background:var(--bg-3)}
+.sheet .body{padding:14px;overflow:auto}
+.sheet .foot{display:flex;gap:8px;justify-content:flex-end;padding:11px 14px;border-top:1px solid var(--line)}
+#edit{width:100%;height:52vh;resize:vertical;background:#080b09;font-size:12.5px;line-height:1.55;white-space:pre;overflow-wrap:normal}
+.hint{color:var(--fg-dim);font-size:11px}
+@media (max-width:620px){
+  td.when{display:none} th.when{display:none}
+  td.acts{opacity:1}
+  header .stats .opt{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <form class="card" id="loginForm">
+    <div class="brand"><i class="dot"></i> CARDPUTER · WUI</div>
+    <div class="sub">Locked. Enter the access password shown on the device screen.</div>
+    <label class="field"><span>Password</span>
+      <input type="password" id="pw" autocomplete="current-password" autofocus></label>
+    <button class="btn primary" style="width:100%" id="loginBtn">Unlock</button>
+    <div class="msg" id="loginMsg"></div>
+  </form>
+</div>
+
+<div id="app">
+  <header>
+    <div class="brand"><i class="dot"></i> CARDPUTER · WUI</div>
+    <div class="stats">
+      <div class="opt">sd <b id="sSd">–</b></div>
+      <div class="opt">heap <b id="sHeap">–</b></div>
+      <div class="opt">ip <b id="sIp">–</b></div>
+      <div>up <b id="sUp">–</b></div>
+      <button class="btn" id="bTerm" title="Toggle console (Ctrl+`)">terminal</button>
+      <button class="btn" id="bOut">lock</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="pane">
+      <div class="bar">
+        <div class="crumbs" id="crumbs"></div>
+        <button class="btn" id="bUp">↑ up</button>
+        <button class="btn" id="bNewFile">+ file</button>
+        <button class="btn" id="bNewDir">+ folder</button>
+        <button class="btn primary" id="bUpload">upload</button>
+        <button class="btn" id="bReload" title="Refresh">⟳</button>
+        <input type="file" id="file" multiple hidden>
+      </div>
+      <div id="list"></div>
+    </div>
+  </main>
+
+  <div id="console">
+    <div id="grip"></div>
+    <div id="out"></div>
+    <div id="cl"><span>$</span><input id="cmd" autocomplete="off" spellcheck="false" placeholder="help"></div>
+  </div>
+</div>
+
+<div id="jobs"></div>
+<div id="drop">DROP FILES TO UPLOAD</div>
+<div id="modal"><div class="sheet" id="sheet"></div></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), el=(t,c,x)=>{const n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n;};
+let CWD="/", STATUS={}, T0=Date.now();
+
+/* ---------- transport ---------- */
+async function api(path, opts={}){
+  const r = await fetch(path, Object.assign({credentials:"same-origin"}, opts));
+  if(r.status===401){ showLogin(); throw new Error("unauthorized"); }
+  return r;
+}
+async function jget(path){ const r=await api(path); const t=await r.text();
+  let j; try{ j=JSON.parse(t); }catch(e){ throw new Error(t.slice(0,160)||("http "+r.status)); }
+  if(!r.ok||j.error) throw new Error(j.error||("http "+r.status)); return j; }
+async function jpost(path, body){ const r=await api(path,{method:"POST",body:body??""});
+  const t=await r.text(); let j; try{ j=JSON.parse(t); }catch(e){ throw new Error(t.slice(0,160)||("http "+r.status)); }
+  if(!r.ok||j.error) throw new Error(j.error||("http "+r.status)); return j; }
+
+/* ---------- helpers ---------- */
+const enc=encodeURIComponent;
+function join(dir,name){ return (dir.endsWith("/")?dir:dir+"/")+name; }
+function parent(p){ if(p==="/")return "/"; const i=p.lastIndexOf("/"); return i<=0?"/":p.slice(0,i); }
+function human(b){ if(b==null)return "–"; const u=["B","K","M","G","T"]; let i=0,v=b;
+  while(v>=1024&&i<u.length-1){v/=1024;i++;} return (i?v.toFixed(v<10?1:0):v)+u[i]; }
+function when(ts){ if(!ts)return ""; const d=new Date(ts*1000);
+  return d.toISOString().slice(0,16).replace("T"," "); }
+function isText(n){ return /\.(txt|md|json|ya?ml|cfg|conf|ini|log|csv|tsv|c|h|cpp|hpp|py|js|ts|css|html?|sh|bat|xml|toml|env|gcode|nfo)$/i.test(n)||!n.includes("."); }
+
+/* ---------- login ---------- */
+function showLogin(){ $("#app").style.display="none"; $("#login").style.display="grid"; setTimeout(()=>$("#pw").focus(),40); }
+function showApp(){ $("#login").style.display="none"; $("#app").style.display="flex"; }
+$("#loginForm").addEventListener("submit", async e=>{
+  e.preventDefault(); const b=$("#loginBtn"); b.disabled=true; $("#loginMsg").textContent="";
+  try{
+    const r=await fetch("/api/login",{method:"POST",credentials:"same-origin",
+      headers:{"Content-Type":"application/json"},body:JSON.stringify({password:$("#pw").value})});
+    const j=await r.json().catch(()=>({error:"bad response"}));
+    if(!r.ok||j.error) throw new Error(j.error||"login failed");
+    $("#pw").value=""; showApp(); boot();
+  }catch(err){ $("#loginMsg").textContent=err.message; }
+  finally{ b.disabled=false; }
+});
+$("#bOut").addEventListener("click", async()=>{ try{ await jpost("/api/logout"); }catch(e){} showLogin(); });
+
+/* ---------- status ---------- */
+async function refreshStatus(){
+  try{
+    STATUS=await jget("/api/status");
+    $("#sSd").textContent = STATUS.sd_total? human(STATUS.sd_used)+" / "+human(STATUS.sd_total) : "none";
+    $("#sHeap").textContent = human(STATUS.heap);
+    $("#sIp").textContent = STATUS.ip||"–";
+    const s=Math.floor((STATUS.uptime||0)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60);
+    $("#sUp").textContent = h? h+"h"+String(m).padStart(2,"0") : m+"m";
+  }catch(e){}
+}
+
+/* ---------- listing ---------- */
+async function go(path){ CWD=path||"/"; await render(); }
+async function render(){
+  const cb=$("#crumbs"); cb.innerHTML="";
+  const root=el("a",null,"sd:"); root.onclick=()=>go("/"); cb.append(root);
+  let acc=""; for(const part of CWD.split("/").filter(Boolean)){
+    acc=join(acc||"/",part); const p=acc;
+    cb.append(el("i",null,"/")); const a=el("a",null,part); a.onclick=()=>go(p); cb.append(a);
+  }
+  const box=$("#list"); box.innerHTML="";
+  let d;
+  try{ d=await jget("/api/list?path="+enc(CWD)); }
+  catch(e){ box.append(el("div","empty","cannot read "+CWD+" — "+e.message)); return; }
+  if(!d.entries.length){ box.append(el("div","empty","empty directory — drop files here to upload")); }
+  else{
+    const t=el("table");
+    t.innerHTML='<thead><tr><th>name</th><th class="size">size</th><th class="when">modified</th><th></th></tr></thead>';
+    const tb=el("tbody");
+    d.entries.sort((a,b)=> (b.dir-a.dir) || a.name.localeCompare(b.name));
+    for(const e of d.entries){
+      const tr=el("tr"), full=join(CWD,e.name);
+      const td=el("td"); const nm=el("div","name");
+      nm.append(el("span","ico"+(e.dir?" dir":""), e.dir?"▸":"·"), el("span",null,e.name));
+      nm.onclick=()=> e.dir? go(full) : (isText(e.name)? openEditor(full) : download(full));
+      td.append(nm); tr.append(td);
+      tr.append(el("td","size", e.dir?"":human(e.size)));
+      tr.append(el("td","when", when(e.mtime)));
+      const a=el("td","acts");
+      if(!e.dir){ const b=el("button",null,"get"); b.title="Download"; b.onclick=()=>download(full); a.append(b); }
+      if(!e.dir && isText(e.name)){ const b=el("button",null,"edit"); b.onclick=()=>openEditor(full); a.append(b); }
+      const rn=el("button",null,"mv"); rn.title="Rename"; rn.onclick=()=>doRename(full,e.name); a.append(rn);
+      const rm=el("button",null,"rm"); rm.title="Delete"; rm.onclick=()=>doDelete(full,e.dir); a.append(rm);
+      tr.append(a); tb.append(tr);
+    }
+    t.append(tb); box.append(t);
+  }
+  refreshStatus();
+}
+
+function download(path){
+  const a=document.createElement("a"); a.href="/api/download?path="+enc(path);
+  a.download=path.split("/").pop(); document.body.append(a); a.click(); a.remove();
+  log("get "+path,"dim");
+}
+async function doDelete(path,isDir){
+  if(!confirm("Delete "+path+(isDir?" and everything inside it?":"?")))return;
+  try{ await jpost("/api/delete?path="+enc(path)); log("rm "+path,"dim"); render(); }
+  catch(e){ log(e.message,"err"); }
+}
+async function doRename(path,name){
+  const n=prompt("Rename to:",name); if(!n||n===name)return;
+  try{ await jpost("/api/rename?from="+enc(path)+"&to="+enc(join(parent(path),n))); render(); }
+  catch(e){ log(e.message,"err"); }
+}
+$("#bNewDir").onclick=async()=>{ const n=prompt("New folder name:"); if(!n)return;
+  try{ await jpost("/api/mkdir?path="+enc(join(CWD,n))); render(); }catch(e){ log(e.message,"err"); } };
+$("#bNewFile").onclick=async()=>{ const n=prompt("New file name:"); if(!n)return;
+  try{ await jpost("/api/touch?path="+enc(join(CWD,n))); render(); openEditor(join(CWD,n)); }catch(e){ log(e.message,"err"); } };
+$("#bUp").onclick=()=>go(parent(CWD));
+$("#bReload").onclick=()=>render();
+
+/* ---------- editor ---------- */
+const MAXEDIT=256*1024;
+async function openEditor(path){
+  let text="", truncated=false;
+  try{
+    // Ask for one byte more than we will edit: if it comes back, the file is
+    // larger than the editor holds and saving it would truncate the original.
+    const r=await api("/api/download?path="+enc(path)+"&max="+(MAXEDIT+1));
+    if(!r.ok) throw new Error("http "+r.status);
+    const buf=await r.arrayBuffer();
+    truncated = buf.byteLength>MAXEDIT;
+    text=new TextDecoder().decode(truncated?buf.slice(0,MAXEDIT):buf);
+  }catch(e){ log("open "+path+": "+e.message,"err"); return; }
+  const sh=$("#sheet"); sh.innerHTML="";
+  const h=el("header"); h.append(el("div","brand",path));
+  const sp=el("div"); sp.style.marginLeft="auto"; sp.className="hint";
+  sp.textContent = truncated ? ("first "+human(MAXEDIT)+" only · read-only") : (human(text.length)+" · utf-8");
+  if(truncated) sp.style.color="var(--warn)";
+  h.append(sp); sh.append(h);
+  const body=el("div","body"); const ta=el("textarea"); ta.id="edit"; ta.value=text; body.append(ta); sh.append(body);
+  const foot=el("div","foot");
+  const cancel=el("button","btn","close"); cancel.onclick=closeModal;
+  if(truncated){                       // never offer a save that would cut the file off
+    ta.readOnly=true;
+    const note=el("div","hint","Too large to edit safely — download it instead.");
+    note.style.marginRight="auto"; foot.append(note,cancel); sh.append(foot);
+    $("#modal").classList.add("on"); return;
+  }
+  const save=el("button","btn primary","save");
+  save.onclick=async()=>{ save.disabled=true; save.textContent="saving…";
+    try{ await putBlob(path,new Blob([ta.value])); closeModal(); render(); log("saved "+path,"dim"); }
+    catch(e){ log(e.message,"err"); save.disabled=false; save.textContent="save"; } };
+  foot.append(cancel,save); sh.append(foot);
+  $("#modal").classList.add("on"); setTimeout(()=>ta.focus(),30);
+  ta.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="s"){e.preventDefault();save.onclick();}
+    if(e.key==="Tab"){e.preventDefault(); const s=ta.selectionStart; ta.setRangeText("  ",s,ta.selectionEnd,"end");} });
+}
+function closeModal(){ $("#modal").classList.remove("on"); $("#sheet").innerHTML=""; }
+$("#modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeModal(); });
+addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal();
+  if(e.ctrlKey&&e.key==="`"){ e.preventDefault(); $("#console").classList.toggle("hidden"); } });
+
+/* ---------- upload (chunked, resumable, any size) ---------- */
+const CHUNK=48*1024, RETRIES=4;
+function jobCard(name){
+  const c=el("div","job"); const row=el("div","row");
+  const fn=el("div","fn",name), pc=el("div","pc","0%"), x=el("button",null,"✕");
+  row.append(fn,pc,x); const tr=el("div","track"), fl=el("div","fill"); tr.append(fl);
+  c.append(row,tr); $("#jobs").append(c);
+  let cancelled=false; x.onclick=()=>{ cancelled=true; c.remove(); };
+  return { set:(p,txt)=>{ fl.style.width=(p*100).toFixed(1)+"%"; pc.textContent=txt??Math.round(p*100)+"%"; },
+           fail:m=>{ c.classList.add("fail"); pc.textContent=m; fl.style.width="100%"; },
+           done:()=>{ c.classList.add("done"); pc.textContent="done"; fl.style.width="100%"; setTimeout(()=>c.remove(),1800); },
+           cancelled:()=>cancelled };
+}
+async function putBlob(path, blob, job){
+  const total=blob.size; let off=0, resyncs=0;
+  while(off<total || (total===0&&off===0)){
+    if(job&&job.cancelled()) throw new Error("cancelled");
+    const end=Math.min(off+CHUNK,total);
+    const part=blob.slice(off,end);
+    let ok=false, lastErr, resync=null;
+    for(let a=0;a<RETRIES&&!ok;a++){
+      try{
+        const r=await api("/api/upload?path="+enc(path)+"&offset="+off+(end>=total?"&final=1":""),
+                          {method:"POST",body:part,headers:{"Content-Type":"application/octet-stream"}});
+        const j=await r.json().catch(()=>({error:"bad response"}));
+        if(r.status===409 && typeof j.size==="number"){ resync=j.size; break; }  // device knows better
+        if(!r.ok||j.error) throw new Error(j.error||("http "+r.status));
+        ok=true;
+      }catch(e){ lastErr=e; await new Promise(s=>setTimeout(s,250*(a+1))); }
+    }
+    if(resync!==null){
+      if(++resyncs>5 || resync>total) throw new Error("device reports "+human(resync)+" — upload out of sync");
+      off=resync; if(job) job.set(total?off/total:0,"resyncing…"); continue;
+    }
+    if(!ok) throw new Error("upload failed at "+human(off)+": "+(lastErr&&lastErr.message));
+    off=end; if(job) job.set(total?off/total:1, human(off)+(total?" / "+human(total):""));
+    if(total===0) break;
+  }
+  return true;
+}
+async function uploadFiles(files){
+  for(const f of files){
+    const dest=join(CWD,f.name), job=jobCard(f.name);
+    const t=Date.now();
+    try{ await putBlob(dest,f,job); job.done();
+      log("put "+dest+"  "+human(f.size)+"  "+((f.size/1024)/((Date.now()-t)/1000)).toFixed(0)+" KB/s","dim");
+    }catch(e){ job.fail(e.message.slice(0,42)); log(e.message,"err"); }
+    render();
+  }
+}
+$("#bUpload").onclick=()=>$("#file").click();
+$("#file").onchange=e=>{ uploadFiles([...e.target.files]); e.target.value=""; };
+let dragDepth=0;
+addEventListener("dragenter",e=>{ e.preventDefault(); if(++dragDepth===1)$("#drop").classList.add("on"); });
+addEventListener("dragover",e=>e.preventDefault());
+addEventListener("dragleave",e=>{ if(--dragDepth<=0){dragDepth=0;$("#drop").classList.remove("on");} });
+addEventListener("drop",e=>{ e.preventDefault(); dragDepth=0; $("#drop").classList.remove("on");
+  if(e.dataTransfer.files.length) uploadFiles([...e.dataTransfer.files]); });
+
+/* ---------- console ---------- */
+function log(text,cls){ const o=$("#out"); const d=el("div",cls||null,text); o.append(d); o.scrollTop=o.scrollHeight; }
+$("#bTerm").onclick=()=>$("#console").classList.toggle("hidden");
+(function(){ let dragging=false,y0=0,h0=0; const c=$("#console");
+  $("#grip").addEventListener("mousedown",e=>{dragging=true;y0=e.clientY;h0=c.offsetHeight;e.preventDefault();});
+  addEventListener("mousemove",e=>{ if(dragging) c.style.height=Math.max(90,Math.min(innerHeight-160,h0+(y0-e.clientY)))+"px"; });
+  addEventListener("mouseup",()=>dragging=false); })();
+
+const HIST=[]; let hi=-1;
+$("#cmd").addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp"){ if(hi<HIST.length-1){hi++; e.target.value=HIST[HIST.length-1-hi];} e.preventDefault(); }
+  else if(e.key==="ArrowDown"){ if(hi>0){hi--; e.target.value=HIST[HIST.length-1-hi];} else {hi=-1;e.target.value="";} e.preventDefault(); }
+  else if(e.key==="Enter"){ const v=e.target.value.trim(); e.target.value=""; hi=-1; if(v){HIST.push(v); runCmd(v);} }
+});
+const HELP=`commands
+  ls [path]            list directory
+  cd <path>            change directory
+  pwd                  print working directory
+  cat <file>           print file (first 8 KB)
+  head <file> [n]      first n lines (default 20)
+  edit <file>          open in editor
+  mkdir <name>         create directory
+  touch <name>         create empty file
+  rm <path>            delete file or directory (recursive)
+  mv <src> <dst>       rename / move
+  get <file>           download to browser
+  put                  open file picker and upload here
+  df                   sd card usage
+  info                 device status
+  wifi <ssid> <pass>   join a network and save it
+  passwd <new>         change the WUI password
+  reboot               restart the device
+  clear                clear this console`;
+function abs(p){ if(!p)return CWD; if(p.startsWith("/"))return p.replace(/\/+$/,"")||"/";
+  const parts=(CWD+"/"+p).split("/"); const st=[];
+  for(const s of parts){ if(!s||s===".")continue; if(s===".."){st.pop();continue;} st.push(s); }
+  return "/"+st.join("/"); }
+async function runCmd(line){
+  log("$ "+line,"cmd");
+  const [c,...a]=line.split(/\s+/);
+  try{
+    switch(c){
+      case "help": log(HELP); break;
+      case "clear": $("#out").innerHTML=""; break;
+      case "pwd": log(CWD); break;
+      case "ls": { const p=abs(a[0]); const d=await jget("/api/list?path="+enc(p));
+        d.entries.sort((x,y)=>(y.dir-x.dir)||x.name.localeCompare(y.name));
+        if(!d.entries.length) log("(empty)","dim");
+        for(const e of d.entries) log((e.dir?"d ":"- ")+String(e.dir?"":human(e.size)).padStart(6," ")+"  "+e.name);
+        break; }
+      case "cd": { const p=abs(a[0]||"/"); await jget("/api/list?path="+enc(p)); go(p); break; }
+      case "cat": case "head": { const p=abs(a[0]); const n=c==="head"?parseInt(a[1]||"20"):0;
+        const r=await api("/api/download?path="+enc(p)+"&max=8192"); if(!r.ok)throw new Error("http "+r.status);
+        let t=await r.text(); if(n) t=t.split("\n").slice(0,n).join("\n"); log(t); break; }
+      case "edit": openEditor(abs(a[0])); break;
+      case "mkdir": await jpost("/api/mkdir?path="+enc(abs(a[0]))); render(); log("ok","dim"); break;
+      case "touch": await jpost("/api/touch?path="+enc(abs(a[0]))); render(); log("ok","dim"); break;
+      case "rm": await jpost("/api/delete?path="+enc(abs(a[0]))); render(); log("ok","dim"); break;
+      case "mv": await jpost("/api/rename?from="+enc(abs(a[0]))+"&to="+enc(abs(a[1]))); render(); log("ok","dim"); break;
+      case "get": download(abs(a[0])); break;
+      case "put": $("#file").click(); break;
+      case "df": { await refreshStatus(); log("sd  "+human(STATUS.sd_used)+" used / "+human(STATUS.sd_total)+" total ("+(STATUS.sd_type||"?")+")"); break; }
+      case "info": { await refreshStatus();
+        log(["chip     "+STATUS.chip,"firmware "+STATUS.fw,"ssid     "+(STATUS.ssid||"(ap mode)"),
+             "ip       "+STATUS.ip,"rssi     "+(STATUS.rssi??"–")+" dBm","heap     "+human(STATUS.heap)+" free",
+             "psram    "+human(STATUS.psram),"uptime   "+Math.round(STATUS.uptime)+"s"].join("\n")); break; }
+      case "wifi": { if(a.length<1) throw new Error("usage: wifi <ssid> <password>");
+        log("connecting…","dim");
+        const j=await jpost("/api/wifi",JSON.stringify({ssid:a[0],password:a.slice(1).join(" ")}));
+        log(j.connected? "connected — ip "+j.ip : "failed to join "+a[0], j.connected?null:"err"); break; }
+      case "passwd": { if(!a[0]) throw new Error("usage: passwd <new password, min 8 chars>");
+        await jpost("/api/passwd",JSON.stringify({password:a.join(" ")}));
+        log("password changed — other sessions signed out","dim"); break; }
+      case "reboot": if(confirm("Reboot the device?")){ jpost("/api/reboot").catch(()=>{}); log("rebooting…","dim"); } break;
+      default: log("unknown command: "+c+" (try: help)","err");
+    }
+  }catch(e){ log(e.message,"err"); }
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  log("Cardputer WUI — type `help` for commands.","dim");
+  await refreshStatus();
+  if(STATUS.fw) log("connected to "+(STATUS.ssid||"AP")+" · "+STATUS.ip+" · fw "+STATUS.fw,"dim");
+  if(!STATUS.sd_total) log("no SD card detected — insert a card and press ⟳","err");
+  await go("/");
+  setInterval(refreshStatus,15000);
+}
+(async function(){
+  try{ const r=await fetch("/api/status",{credentials:"same-origin"});
+       if(r.ok){ showApp(); boot(); return; } }catch(e){}
+  showLogin();
+})();
+</script>
+</body>
+</html>
