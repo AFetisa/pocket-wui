@@ -99,9 +99,14 @@ td.acts button:hover{color:var(--accent);background:var(--bg-3)}
 .job button{background:none;border:none;color:var(--fg-dim);cursor:pointer}
 
 /* ---------- modal / drop ---------- */
+/* pointer-events:none — the overlay is a hint, not a lid: a file dropped on a
+   folder row has to reach the row underneath it. */
 #drop{position:fixed;inset:0;background:#0b0f0dcc;border:2px dashed var(--accent);z-index:40;
- display:none;place-items:center;color:var(--accent);letter-spacing:.1em}
+ display:none;place-items:center;color:var(--accent);letter-spacing:.1em;pointer-events:none}
 #drop.on{display:grid}
+tr[draggable]{cursor:grab}
+tr.dragging{opacity:.4}
+.into{outline:1px dashed var(--accent);outline-offset:-1px;background:var(--bg-3)!important}
 #modal{position:fixed;inset:0;background:#000000b0;z-index:45;display:none;place-items:center;padding:16px}
 #modal.on{display:grid}
 .sheet{width:min(860px,96vw);max-height:90vh;display:flex;flex-direction:column;background:var(--bg-2);
@@ -152,8 +157,10 @@ td.acts button:hover{color:var(--accent);background:var(--bg-3)}
         <button class="btn" id="bNewFile">+ file</button>
         <button class="btn" id="bNewDir">+ folder</button>
         <button class="btn primary" id="bUpload">upload</button>
+        <button class="btn" id="bUploadDir" title="Upload a whole folder">upload folder</button>
         <button class="btn" id="bReload" title="Refresh">⟳</button>
         <input type="file" id="file" multiple hidden>
+        <input type="file" id="dir" webkitdirectory directory multiple hidden>
       </div>
       <div id="list"></div>
     </div>
@@ -167,7 +174,7 @@ td.acts button:hover{color:var(--accent);background:var(--bg-3)}
 </div>
 
 <div id="jobs"></div>
-<div id="drop">DROP FILES TO UPLOAD</div>
+<div id="drop">DROP FILES OR FOLDERS TO UPLOAD</div>
 <div id="modal"><div class="sheet" id="sheet"></div></div>
 
 <script>
@@ -230,10 +237,10 @@ async function refreshStatus(){
 async function go(path){ CWD=path||"/"; await render(); }
 async function render(){
   const cb=$("#crumbs"); cb.innerHTML="";
-  const root=el("a",null,"sd:"); root.onclick=()=>go("/"); cb.append(root);
+  const root=el("a",null,"sd:"); root.onclick=()=>go("/"); dropTarget(root,"/"); cb.append(root);
   let acc=""; for(const part of CWD.split("/").filter(Boolean)){
     acc=join(acc||"/",part); const p=acc;
-    cb.append(el("i",null,"/")); const a=el("a",null,part); a.onclick=()=>go(p); cb.append(a);
+    cb.append(el("i",null,"/")); const a=el("a",null,part); a.onclick=()=>go(p); dropTarget(a,p); cb.append(a);
   }
   const box=$("#list"); box.innerHTML="";
   let d;
@@ -247,6 +254,8 @@ async function render(){
     d.entries.sort((a,b)=> (b.dir-a.dir) || a.name.localeCompare(b.name));
     for(const e of d.entries){
       const tr=el("tr"), full=join(CWD,e.name);
+      dragSource(tr,full);
+      if(e.dir) dropTarget(tr,full);
       const td=el("td"); const nm=el("div","name");
       nm.append(el("span","ico"+(e.dir?" dir":""), e.dir?"▸":"·"), el("span",null,e.name));
       nm.onclick=()=> e.dir? go(full) : (isText(e.name)? openEditor(full) : download(full));
@@ -280,11 +289,41 @@ async function doRename(path,name){
   try{ await jpost("/api/rename?from="+enc(path)+"&to="+enc(join(parent(path),n))); render(); }
   catch(e){ log(e.message,"err"); }
 }
+/* ---------- drag to move / drop to upload ---------- */
+// Internal moves carry our own MIME type; an OS file drag carries "Files".
+// Both land on the same targets: a folder row, a breadcrumb, or "↑ up".
+const MOVE="application/x-wui-path";
+function dragSource(tr,full){
+  tr.draggable=true;
+  tr.addEventListener("dragstart",e=>{ e.dataTransfer.setData(MOVE,full);
+    e.dataTransfer.effectAllowed="move"; tr.classList.add("dragging"); });
+  tr.addEventListener("dragend",()=>tr.classList.remove("dragging"));
+}
+function dropTarget(node,dir){
+  const wants=e=>e.dataTransfer.types.includes(MOVE)||e.dataTransfer.types.includes("Files");
+  node.addEventListener("dragover",e=>{ if(!wants(e))return;
+    e.preventDefault(); e.stopPropagation(); node.classList.add("into"); });
+  node.addEventListener("dragleave",()=>node.classList.remove("into"));
+  node.addEventListener("drop",e=>{ if(!wants(e))return;
+    e.preventDefault(); e.stopPropagation(); node.classList.remove("into"); endDrag();
+    const to=(typeof dir==="function")?dir():dir, from=e.dataTransfer.getData(MOVE);
+    if(from) doMove(from,to); else takeDrop(e,to);
+  });
+}
+async function doMove(from,dir){
+  const name=from.split("/").pop(), to=join(dir,name);
+  if(to===from) return;
+  if((dir+"/").startsWith(from+"/")) return log("cannot move "+from+" inside itself","err");
+  try{ await jpost("/api/rename?from="+enc(from)+"&to="+enc(to)); log("mv "+from+" "+to,"dim"); render(); }
+  catch(e){ log(e.message,"err"); }
+}
+
 $("#bNewDir").onclick=async()=>{ const n=prompt("New folder name:"); if(!n)return;
   try{ await jpost("/api/mkdir?path="+enc(join(CWD,n))); render(); }catch(e){ log(e.message,"err"); } };
 $("#bNewFile").onclick=async()=>{ const n=prompt("New file name:"); if(!n)return;
   try{ await jpost("/api/touch?path="+enc(join(CWD,n))); render(); openEditor(join(CWD,n)); }catch(e){ log(e.message,"err"); } };
 $("#bUp").onclick=()=>go(parent(CWD));
+dropTarget($("#bUp"),()=>parent(CWD));
 $("#bReload").onclick=()=>render();
 
 /* ---------- editor ---------- */
@@ -343,7 +382,7 @@ function jobCard(name){
            cancelled:()=>cancelled };
 }
 async function putBlob(path, blob, job){
-  const total=blob.size; let off=0, resyncs=0;
+  const total=blob.size; let off=0, stuck=0, lastResync=-1;
   while(off<total || (total===0&&off===0)){
     if(job&&job.cancelled()) throw new Error("cancelled");
     const end=Math.min(off+CHUNK,total);
@@ -360,7 +399,13 @@ async function putBlob(path, blob, job){
       }catch(e){ lastErr=e; await new Promise(s=>setTimeout(s,250*(a+1))); }
     }
     if(resync!==null){
-      if(++resyncs>5 || resync>total) throw new Error("device reports "+human(resync)+" — upload out of sync");
+      // A chunk that died mid-write leaves the card holding part of it; the 409
+      // tells us where the file really ends. That is normal recovery on a flaky
+      // link, so only a resync that keeps landing on the SAME offset is a fault —
+      // counting every resync failed long uploads that were in fact progressing.
+      if(resync>total) throw new Error("device holds "+human(resync)+" for this path, more than the "+human(total)+" being sent");
+      if(resync===lastResync){ if(++stuck>5) throw new Error("upload stuck at "+human(resync)+" — device is not accepting this chunk"); }
+      else { stuck=0; lastResync=resync; }
       off=resync; if(job) job.set(total?off/total:0,"resyncing…"); continue;
     }
     if(!ok) throw new Error("upload failed at "+human(off)+": "+(lastErr&&lastErr.message));
@@ -369,24 +414,69 @@ async function putBlob(path, blob, job){
   }
   return true;
 }
-async function uploadFiles(files){
-  for(const f of files){
-    const dest=join(CWD,f.name), job=jobCard(f.name);
-    const t=Date.now();
-    try{ await putBlob(dest,f,job); job.done();
-      log("put "+dest+"  "+human(f.size)+"  "+((f.size/1024)/((Date.now()-t)/1000)).toFixed(0)+" KB/s","dim");
+// An upload is a list of {rel} folders and {rel,file} files, so a picked
+// folder, a dropped folder and a plain multi-file selection all take one path.
+async function ensureDir(path, base, made){
+  if(path===base || path==="/" || made.has(path)) return;
+  await ensureDir(parent(path), base, made);
+  try{ await jpost("/api/mkdir?path="+enc(path)); }
+  catch(e){ made.add(path); throw e; }
+  made.add(path);
+}
+async function uploadItems(items, base){
+  base=base||CWD; const made=new Set();
+  for(const it of items){
+    const dest=join(base,it.rel);
+    try{
+      if(it.dir){ await ensureDir(dest,base,made); continue; }
+      await ensureDir(parent(dest),base,made);
+    }catch(e){ log(e.message,"err"); continue; }
+    const job=jobCard(it.rel), t=Date.now();
+    try{ await putBlob(dest,it.file,job); job.done();
+      log("put "+dest+"  "+human(it.file.size)+"  "+((it.file.size/1024)/((Date.now()-t)/1000)).toFixed(0)+" KB/s","dim");
     }catch(e){ job.fail(e.message.slice(0,42)); log(e.message,"err"); }
     render();
   }
+  render();
 }
+// webkitRelativePath is set by <input webkitdirectory>; plain picks have none.
+const asItems=files=>[...files].map(f=>({file:f, rel:f.webkitRelativePath||f.name}));
+
+// Dropped folders only exist as DataTransfer entries — read them recursively.
+async function walkEntry(entry, prefix){
+  if(entry.isFile){
+    const f=await new Promise((ok,bad)=>entry.file(ok,bad));
+    return [{file:f, rel:prefix+entry.name}];
+  }
+  const dir=prefix+entry.name, out=[{dir:true, rel:dir}], rd=entry.createReader();
+  let batch; // readEntries yields at most ~100 at a time and [] when exhausted
+  do{ batch=await new Promise((ok,bad)=>rd.readEntries(ok,bad));
+      for(const k of batch) out.push(...await walkEntry(k, dir+"/"));
+  }while(batch.length);
+  return out;
+}
+async function takeDrop(e, base){
+  // dataTransfer is emptied once this handler yields — grab the entries first.
+  const entries=[...(e.dataTransfer.items||[])]
+    .map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+  const files=[...e.dataTransfer.files];
+  if(!entries.length) return files.length && uploadItems(asItems(files), base);
+  const items=[]; for(const en of entries) items.push(...await walkEntry(en,""));
+  return uploadItems(items, base);
+}
+
 $("#bUpload").onclick=()=>$("#file").click();
-$("#file").onchange=e=>{ uploadFiles([...e.target.files]); e.target.value=""; };
+$("#bUploadDir").onclick=()=>$("#dir").click();
+$("#file").onchange=e=>{ uploadItems(asItems(e.target.files)); e.target.value=""; };
+$("#dir").onchange=e=>{ uploadItems(asItems(e.target.files)); e.target.value=""; };
 let dragDepth=0;
-addEventListener("dragenter",e=>{ e.preventDefault(); if(++dragDepth===1)$("#drop").classList.add("on"); });
+const endDrag=()=>{ dragDepth=0; $("#drop").classList.remove("on"); };
+addEventListener("dragenter",e=>{ e.preventDefault();
+  if(++dragDepth===1 && e.dataTransfer.types.includes("Files")) $("#drop").classList.add("on"); });
 addEventListener("dragover",e=>e.preventDefault());
-addEventListener("dragleave",e=>{ if(--dragDepth<=0){dragDepth=0;$("#drop").classList.remove("on");} });
-addEventListener("drop",e=>{ e.preventDefault(); dragDepth=0; $("#drop").classList.remove("on");
-  if(e.dataTransfer.files.length) uploadFiles([...e.dataTransfer.files]); });
+addEventListener("dragleave",()=>{ if(--dragDepth<=0) endDrag(); });
+addEventListener("drop",e=>{ e.preventDefault(); endDrag();
+  if(!e.dataTransfer.getData(MOVE)) takeDrop(e,CWD); });
 
 /* ---------- console ---------- */
 function log(text,cls){ const o=$("#out"); const d=el("div",cls||null,text); o.append(d); o.scrollTop=o.scrollHeight; }

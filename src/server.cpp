@@ -264,7 +264,15 @@ esp_err_t hMkdir(httpd_req_t *req) {
   String path;
   if (!queryPath(req, "path", path) || path == "/") return sendErr(req, "400 Bad Request", "bad path");
   storage::Guard g;
-  if (SD.exists(path)) return sendErr(req, "409 Conflict", "already exists: " + path);
+  if (SD.exists(path)) {
+    // Idempotent for a directory: a folder upload re-asserts every parent it
+    // walks past. Only a name already taken by a *file* is a real conflict.
+    File probe = SD.open(path);
+    bool isDir = probe && probe.isDirectory();
+    if (probe) probe.close();
+    if (isDir) return sendOk(req);
+    return sendErr(req, "409 Conflict", "already exists: " + path);
+  }
   if (!SD.mkdir(path)) return sendErr(req, "500 Internal Server Error", "mkdir failed: " + path);
   return sendOk(req);
 }
@@ -344,11 +352,12 @@ esp_err_t hUpload(httpd_req_t *req) {
     timeouts = 0;
     if (got <= 0) { f->flush(); return sendErr(req, "408 Request Timeout", "connection dropped"); }
     size_t w = f->write(g_buf, got);
+    storage::uploadWrote(w);            // count it before any error exit: a short
+    written += w;                       // write still put those bytes on the card
     if (w != (size_t)got) {
       f->flush();
       return sendErr(req, "507 Insufficient Storage", "short write — card full?");
     }
-    written += w;
     remaining -= got;
     delay(0);                           // let the IDLE/wifi tasks breathe
   }

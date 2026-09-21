@@ -28,6 +28,9 @@ struct Guard {
 // Returns the handle positioned at `offset`, or a falsy File on mismatch
 // (in which case *actual is set to the real size so the client can resume).
 File *uploadHandle(const String &path, uint64_t offset, uint64_t *actual, String &err);
+void  uploadWrote(size_t n);   // report accepted bytes. The handle tracks its own
+                               // size: File::size() re-stats the path, and FATFS
+                               // only updates that on flush, so mid-upload it lies.
 void  closeUpload(bool force = false);
 void  tickUploadIdle();      // call from loop(): closes an idle handle
 

@@ -30,7 +30,12 @@ built-in command line.
   simply retried at the same offset — interrupted uploads resume instead of restarting.
   Downloads carry a real `Content-Length` and honour HTTP `Range`, so a big download
   survives a Wi-Fi blip and browsers show accurate progress.
-- **Drag and drop**, multi-file uploads, per-file progress with cancel.
+- **Drag and drop whole folders.** Drop a folder — or pick one with *upload folder* —
+  and the tree is recreated on the card, subdirectories and all. Individual files and
+  multi-file selections still work the same way; each file gets its own progress row
+  with cancel. Drop onto a folder row to put it straight in there.
+- **Drag to move.** Drag any row onto a folder, a breadcrumb, or *↑ up* to move it
+  there; folders move with their contents.
 - **Create, rename, delete** (directories delete recursively) and an in-browser text
   editor with `Ctrl-S` to save.
 - **Built-in console** — `ls`, `cd`, `cat`, `head`, `mkdir`, `touch`, `rm`, `mv`, `get`,
@@ -105,9 +110,9 @@ Everything except `GET /` and `POST /api/login` requires the session cookie.
 | `GET`  | `/api/list?path=` | directory listing |
 | `GET`  | `/api/download?path=[&max=]` | `Range` supported; `max` truncates (used by `cat`) |
 | `POST` | `/api/upload?path=&offset=[&final=1]` | raw body chunk; `409 {size}` on offset mismatch |
-| `POST` | `/api/mkdir?path=` · `/api/touch?path=` | create |
+| `POST` | `/api/mkdir?path=` · `/api/touch?path=` | create; `mkdir` is idempotent on an existing directory (a folder upload re-asserts its parents) and `409` only if the name is a file |
 | `POST` | `/api/delete?path=` | recursive for directories |
-| `POST` | `/api/rename?from=&to=` | move / rename |
+| `POST` | `/api/rename?from=&to=` | move / rename — any `to` under the card root, so this is also how the UI moves a dropped row into a folder |
 | `POST` | `/api/wifi` | `{"ssid":"…","password":"…"}` — joins and saves |
 | `POST` | `/api/passwd` | `{"password":"…"}` — ≥ 8 chars, signs out other sessions |
 | `POST` | `/api/reboot` | restart |
@@ -121,7 +126,10 @@ Everything except `GET /` and `POST /api/login` requires the session cookie.
   support exFAT. "Any size" means "up to 4 GB" — larger files need SdFat and an exFAT
   card.
 - **One transfer at a time.** `esp_http_server` serves every request from a single
-  task, so a running upload holds the queue until it finishes.
+  task, so a running upload holds the queue until it finishes. A folder upload is
+  therefore strictly sequential — one file after another, in the order the browser
+  hands them over — and a folder of many small files spends most of its time in
+  per-request overhead rather than on the card.
 - Changing the Wi-Fi network moves the device to a new IP: the browser tab that issued
   the `wifi` command will lose its connection and has to be reopened on the new address.
 - File timestamps come from the SD card's clock, which without an RTC or NTP starts at
@@ -142,7 +150,7 @@ src/storage.*           SD mount from M5Unified's pin map, path locking, upload 
 src/server.*            esp_http_server handlers
 src/paths.*             path sanitiser (everything from the network goes through this)
 src/ui.*                on-device screen: status, QR code, factory reset
-test/host/              host unit tests for the path sanitiser: see below
+test/host/              host tests: the path sanitiser and the browser upload loop
 build/                  prebuilt firmware images
 ```
 
@@ -152,18 +160,30 @@ build/                  prebuilt firmware images
 pio run                                     # build
 python3 tools/embed_web.py                  # re-embed the UI on its own
 g++ -std=c++17 -I test/host -o /tmp/t test/host/test_paths.cpp && /tmp/t   # path tests
+node test/host/test_upload.mjs              # browser upload loop
 ```
 
 `src/paths.cpp` is the security boundary: every path from the network is normalised,
 `..` is clamped at the card root, and FAT-illegal or control characters are rejected.
 The host test suite covers traversal, collapsing, length limits and percent-decoding.
 
+`test_upload.mjs` pulls `putBlob()` straight out of `web/index.html` and runs it against
+a fake device, so the chunking, the retry and the `409` re-seek are covered without a
+browser. Edit the upload loop and the test follows it.
+
 ## Verification status
 
 Built clean with PlatformIO (ESP32-S3, Arduino core 3.x, M5Unified 0.2.22):
-`RAM 15.0%, Flash 32.4%`. The path sanitiser passes its host test suite (`test/host/`),
+`RAM 14.9%, Flash 32.4%`. The path sanitiser passes its host test suite (`test/host/`),
 which covers traversal, collapsing, length limits and percent-decoding of the real
-`src/paths.cpp`.
+`src/paths.cpp`. The upload loop passes `test/host/test_upload.mjs`, which runs the real
+`putBlob()` from `web/index.html` against a device that truncates chunks mid-write.
+
+Folder upload and drag-to-move were checked at the API level against
+`tools/mock_server.py` — nested `mkdir`, idempotent re-`mkdir`, upload into a created
+subtree, `rename` across directories, and its `404`/`409` refusals. The browser drag
+gestures themselves (dropping a row on a folder, dropping an OS folder on the page)
+have **not** been exercised in a real browser; no browser was available to this build.
 
 The HTTP contract — login, listing, traversal rejection, 300 KB chunked upload,
 byte-identical download, `Range` request, stale-offset resync, recursive delete — was

@@ -184,6 +184,10 @@ class H(BaseHTTPRequestHandler):
             real = s[0]
             try:
                 if route == "/api/mkdir":
+                    if os.path.isdir(real):        # idempotent, like the firmware
+                        return self.send_json(200, {"ok": True})
+                    if os.path.exists(real):
+                        return self.send_json(409, {"error": "already exists"})
                     os.mkdir(real)
                 elif route == "/api/touch":
                     if os.path.exists(real):
@@ -197,9 +201,16 @@ class H(BaseHTTPRequestHandler):
             return self.send_json(200, {"ok": True})
         if route == "/api/rename":
             a, b = safe(self.q("from")), safe(self.q("to"))
-            if not a or not b:
+            if not a or not b or a[1] == "/" or b[1] == "/":
                 return self.send_json(400, {"error": "bad path"})
-            os.rename(a[0], b[0])
+            if not os.path.exists(a[0]):
+                return self.send_json(404, {"error": "no such path: " + a[1]})
+            if os.path.exists(b[0]):
+                return self.send_json(409, {"error": "already exists: " + b[1]})
+            try:
+                os.rename(a[0], b[0])
+            except OSError as e:
+                return self.send_json(500, {"error": str(e)})
             return self.send_json(200, {"ok": True})
         if route in ("/api/wifi", "/api/passwd", "/api/reboot"):
             return self.send_json(200, {"ok": True, "connected": True, "ip": "127.0.0.1"})

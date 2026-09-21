@@ -13,6 +13,7 @@ int8_t   g_sck = -1, g_mosi = -1, g_miso = -1, g_cs = -1;
 
 File     g_up;                  // cached upload handle
 String   g_upPath;
+uint64_t g_upSize = 0;          // bytes accepted on this handle — see uploadHandle()
 uint32_t g_upTouched = 0;
 
 }  // namespace
@@ -93,16 +94,25 @@ File *uploadHandle(const String &path, uint64_t offset, uint64_t *actual, String
       File probe = SD.open(path, FILE_WRITE);       // truncates
       if (!probe) { err = "cannot create " + path; return nullptr; }
       g_up = probe;
+      g_upSize = 0;
     } else {
+      // Nothing open: the file on the card is settled, so its own size is the
+      // truth to resume from.
       uint64_t have = 0;
       { File probe = SD.open(path, FILE_READ); if (probe) { have = probe.size(); probe.close(); } }
       if (have != offset) { *actual = have; err = "offset mismatch"; return nullptr; }
       g_up = SD.open(path, FILE_APPEND);
       if (!g_up) { err = "cannot append to " + path; return nullptr; }
+      g_upSize = have;
     }
     g_upPath = path;
-  } else if (g_up.size() != offset) {
-    *actual = g_up.size();
+  } else if (g_upSize != offset) {
+    // Deliberately NOT g_up.size(): that re-stats the path, and FATFS only
+    // updates a file's directory entry on flush, so mid-upload it reports the
+    // last flushed size. Answering a client resync with that stale number sends
+    // it backwards, it re-sends bytes the handle already holds, and the file
+    // ends up longer than the source. Count what we accepted instead.
+    *actual = g_upSize;
     err = "offset mismatch";
     return nullptr;
   }
@@ -110,10 +120,13 @@ File *uploadHandle(const String &path, uint64_t offset, uint64_t *actual, String
   return &g_up;
 }
 
+void uploadWrote(size_t n) { g_upSize += n; g_upTouched = millis(); }
+
 void closeUpload(bool force) {
   (void)force;
   if (g_up) { g_up.flush(); g_up.close(); }
   g_upPath = "";
+  g_upSize = 0;
 }
 
 void tickUploadIdle() {
