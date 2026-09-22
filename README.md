@@ -64,6 +64,11 @@ pio device monitor               # optional: watch the first-boot password
 Prebuilt binary: `build/firmware.bin` (flash at offset `0x10000`, or use
 `build/firmware-merged.bin` at offset `0` with `esptool.py write_flash 0x0 ...`).
 
+**Via M5Launcher (no USB):** copy `build/firmware.bin` to the card as
+`/downloads/WUI.BIN` and launch it from the menu. Use `firmware.bin`, **never**
+`firmware-merged.bin` — the merged image carries the bootloader at byte 0 and the app
+at `0x10000`, and the launcher cannot run it.
+
 ## First boot
 
 1. The Cardputer comes up as an access point called **`Cardputer-WUI`**. Its WPA2 key
