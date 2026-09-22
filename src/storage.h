@@ -8,6 +8,7 @@ namespace storage {
 // detected board — nothing here is hardcoded per-board.
 bool begin();
 bool mounted();
+uint32_t clockHz();       // SPI clock the card passed its probe at; 0 if unmounted
 bool remount();
 
 uint64_t totalBytes();

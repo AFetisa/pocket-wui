@@ -234,6 +234,7 @@ async function refreshStatus(){
 }
 
 /* ---------- listing ---------- */
+let renderSeq=0;
 async function go(path){ CWD=path||"/"; await render(); }
 async function render(){
   const cb=$("#crumbs"); cb.innerHTML="";
@@ -242,10 +243,15 @@ async function render(){
     acc=join(acc||"/",part); const p=acc;
     cb.append(el("i",null,"/")); const a=el("a",null,part); a.onclick=()=>go(p); dropTarget(a,p); cb.append(a);
   }
-  const box=$("#list"); box.innerHTML="";
-  let d;
-  try{ d=await jget("/api/list?path="+enc(CWD)); }
-  catch(e){ box.append(el("div","empty","cannot read "+CWD+" — "+e.message)); return; }
+  // Renders overlap (an upload re-renders after every file): only the newest
+  // may touch the list, and it clears only once its data is in hand —
+  // otherwise two in flight both clear, then both append, and every row doubles.
+  const box=$("#list"), mine=++renderSeq;
+  let d, err;
+  try{ d=await jget("/api/list?path="+enc(CWD)); }catch(e){ err=e; }
+  if(mine!==renderSeq) return;
+  box.innerHTML="";
+  if(err){ box.append(el("div","empty","cannot read "+CWD+" — "+err.message)); return; }
   if(!d.entries.length){ box.append(el("div","empty","empty directory — drop files here to upload")); }
   else{
     const t=el("table");
@@ -563,6 +569,7 @@ async function boot(){
   await refreshStatus();
   if(STATUS.fw) log("connected to "+(STATUS.ssid||"AP")+" · "+STATUS.ip+" · fw "+STATUS.fw,"dim");
   if(!STATUS.sd_total) log("no SD card detected — insert a card and press ⟳","err");
+  else if(STATUS.sd_hz) log("sd "+(STATUS.sd_type||"")+" · "+human(STATUS.sd_total)+" · spi "+(STATUS.sd_hz/1e6)+" MHz","dim");
   await go("/");
   setInterval(refreshStatus,15000);
 }

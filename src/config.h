@@ -20,3 +20,8 @@
 #define WUI_IO_BUF          (24 * 1024)          // SD read/write staging buffer
 #define WUI_MAX_PATH        192                  // FAT full-path budget
 #define WUI_IDLE_FILE_MS    8000                 // close a cached upload handle after
+
+// SD SPI clocks to try, fastest first; the first that survives a write/read-back
+// probe is kept. 4 MHz is what every sibling firmware runs on this unit, so it is
+// the floor. Drop the faster entries if uploads still misbehave on your card.
+#define WUI_SD_HZ_LADDER    20000000, 10000000, 4000000

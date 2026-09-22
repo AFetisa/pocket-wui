@@ -9,7 +9,27 @@ namespace {
 
 SemaphoreHandle_t g_mutex = nullptr;
 bool     g_mounted = false;
+uint32_t g_hz = 0;
 int8_t   g_sck = -1, g_mosi = -1, g_miso = -1, g_cs = -1;
+
+// A mount only proves the card answered its init sequence; data transfers at
+// the same clock can still corrupt. Round-trip one block before trusting it.
+bool probeCard() {
+  static const char *kProbe = "/.wui_probe";
+  uint8_t out[512], in[512];
+  for (int i = 0; i < 512; ++i) out[i] = (uint8_t)(i * 7 + 3);
+  File f = SD.open(kProbe, FILE_WRITE);
+  if (!f) return false;
+  bool ok = f.write(out, sizeof(out)) == sizeof(out);
+  f.close();
+  if (ok) {
+    f = SD.open(kProbe, FILE_READ);
+    ok = f && f.read(in, sizeof(in)) == (int)sizeof(in) && memcmp(in, out, sizeof(in)) == 0;
+    if (f) f.close();
+  }
+  SD.remove(kProbe);
+  return ok;
+}
 
 File     g_up;                  // cached upload handle
 String   g_upPath;
@@ -35,17 +55,40 @@ bool begin() {
     log_e("no SD pin map for this board");
     return false;
   }
+  // On the ADV the SD card shares this SPI bus with the EXT header, whose
+  // peripheral chip-select is G5 (the LoRa cap, for one). Floating low, that
+  // device answers on MISO too and corrupts SD traffic. Every firmware proven
+  // on this hardware deselects it first. (On the v1.1, G5 is a keyboard line —
+  // leave it alone there.)
+  if (M5.getBoard() == m5::board_t::board_M5CardputerADV) {
+    pinMode(5, OUTPUT);
+    digitalWrite(5, HIGH);
+    delay(50);
+  }
+  SPI.end();
   SPI.begin(g_sck, g_miso, g_mosi, g_cs);
   Guard g;
-  // 25 MHz is the reliable ceiling on these short traces; fall back once.
-  // SDFS::begin() returns true immediately if a card is already attached, so the
-  // first attempt has to be torn down for the slower retry to mean anything.
-  g_mounted = SD.begin(g_cs, SPI, 25000000);
-  if (!g_mounted) { SD.end(); g_mounted = SD.begin(g_cs, SPI, 10000000); }
-  if (g_mounted) log_i("SD mounted: %llu bytes", SD.totalBytes());
+  // Fastest clock that survives a write/read-back wins. 4 MHz is the floor the
+  // sibling firmwares run on this unit, so it stays mounted even if its probe
+  // fails (a full or write-protected card still browses). SDFS::begin() returns
+  // true at once if a card is already attached, so each try starts from end().
+  static const uint32_t kHz[] = {WUI_SD_HZ_LADDER};
+  const size_t n = sizeof(kHz) / sizeof(kHz[0]);
+  for (size_t i = 0; i < n; ++i) {
+    SD.end();
+    g_mounted = false;
+    if (!SD.begin(g_cs, SPI, kHz[i]) || SD.cardType() == CARD_NONE) continue;
+    g_mounted = true;
+    g_hz = kHz[i];
+    if (probeCard()) break;
+    log_w("SD at %lu Hz failed its write probe", (unsigned long)kHz[i]);
+  }
+  if (g_mounted) log_i("SD mounted at %lu Hz: %llu bytes", (unsigned long)g_hz, SD.totalBytes());
   else           log_w("SD mount failed (card inserted?)");
   return g_mounted;
 }
+
+uint32_t clockHz() { return g_mounted ? g_hz : 0; }
 
 bool mounted() { return g_mounted; }
 

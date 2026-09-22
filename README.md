@@ -181,9 +181,10 @@ which covers traversal, collapsing, length limits and percent-decoding of the re
 
 Folder upload and drag-to-move were checked at the API level against
 `tools/mock_server.py` — nested `mkdir`, idempotent re-`mkdir`, upload into a created
-subtree, `rename` across directories, and its `404`/`409` refusals. The browser drag
-gestures themselves (dropping a row on a folder, dropping an OS folder on the page)
-have **not** been exercised in a real browser; no browser was available to this build.
+subtree, `rename` across directories, and its `404`/`409` refusals. In a real
+(Playwright/Chromium) browser against the mock: multi-file upload byte-identical,
+*upload folder* recreating a nested tree, and dragging a file row onto a folder row.
+Dropping a folder from the OS file manager is the one gesture not driven.
 
 The HTTP contract — login, listing, traversal rejection, 300 KB chunked upload,
 byte-identical download, `Range` request, stale-offset resync, recursive delete — was
@@ -193,3 +194,10 @@ the API shape and the browser UI against it, not the C++ handlers in `src/server
 
 **It has not been run on a physical Cardputer ADV** — no device was attached to the
 machine that built it. Expect to verify the SD mount and the screen layout on first flash.
+
+The SD mount follows the firmwares that *are* proven on this unit: G5 (the EXT
+header's SPI chip-select, sharing the SD bus) is driven high before mounting, and
+the clock is chosen by write/read-back probe from `WUI_SD_HZ_LADDER` in
+`src/config.h`, never below the 4 MHz those firmwares run at. The web console prints
+the clock it settled on at sign-in (`sd SDHC · 29G · spi 20 MHz`). If uploads still
+misbehave, drop the faster entries from the ladder.

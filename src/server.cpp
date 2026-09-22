@@ -105,6 +105,13 @@ bool requireAuth(httpd_req_t *req) {
 
 bool requireSD(httpd_req_t *req) {
   if (storage::mounted()) return true;
+  // The card is only mounted at boot, so one inserted (or reseated) later was
+  // unreachable until a reboot. Retry here, at most every few seconds.
+  static uint32_t lastTry = 0;
+  if (!lastTry || millis() - lastTry > 3000) {
+    lastTry = millis();
+    if (storage::remount()) return true;
+  }
   sendErr(req, "503 Service Unavailable", "no SD card mounted");
   return false;
 }
@@ -213,6 +220,7 @@ esp_err_t hStatus(httpd_req_t *req) {
   j += "\"psram\":" + String((uint32_t)ESP.getFreePsram()) + ",";
   j += "\"uptime\":" + String(millis() / 1000) + ",";
   j += "\"sd_type\":\"" + String(storage::cardType()) + "\",";
+  j += "\"sd_hz\":" + String((unsigned long)storage::clockHz()) + ",";
   j += "\"sd_total\":" + String((unsigned long long)storage::totalBytes()) + ",";
   j += "\"sd_used\":" + String((unsigned long long)storage::usedBytes());
   j += "}";
