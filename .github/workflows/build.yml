@@ -1,0 +1,60 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: pip install platformio esptool
+
+      - name: Host tests
+        run: |
+          g++ -std=c++17 -I test/host -o /tmp/t_paths test/host/test_paths.cpp && /tmp/t_paths
+          g++ -std=c++17 -I test/host -o /tmp/t_qr test/host/test_qrtext.cpp && /tmp/t_qr
+          node test/host/test_upload.mjs
+
+      - name: Build firmware
+        run: pio run
+
+      - name: Collect binaries
+        run: |
+          B=.pio/build/cardputer-adv
+          mkdir -p dist
+          cp $B/firmware.bin dist/firmware.bin
+          python -m esptool --chip esp32s3 merge_bin -o dist/firmware-merged.bin \
+            --flash_mode dio --flash_size 8MB \
+            0x0 $B/bootloader.bin 0x8000 $B/partitions.bin \
+            0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
+            0x10000 $B/firmware.bin
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: dist/
+
+      - name: Publish release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
