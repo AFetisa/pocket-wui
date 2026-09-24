@@ -28,7 +28,9 @@
 // The token is single-use, only exists while that screen is up, and is replaced
 // after this long even if nobody scans it. Set WUI_QR_LOGIN to 0 to drop the
 // feature entirely (the /login route then always refuses).
+#ifndef WUI_QR_LOGIN
 #define WUI_QR_LOGIN        1
+#endif
 #define WUI_QR_TOKEN_TTL_MS 120000
 
 // USB: plugged into a computer, the Cardputer shows up as a network adapter
@@ -36,10 +38,14 @@
 // internet) and, on demand, as a USB drive for the SD card. Needs the native
 // USB port, so while it is on, flashing over the cable needs the G0 button held
 // at power-up (or turn USB off in Settings first). 0 removes it from the build.
+#ifndef WUI_USB
 #define WUI_USB             1
+#endif
 #define WUI_USB_IP          192, 168, 7, 1
 
+#ifndef WUI_WEBDAV
 #define WUI_WEBDAV          1                    // http://cardputer.local/dav/ for Finder, Files apps, rclone…
+#endif
 
 #define WUI_IO_BUF          (24 * 1024)          // SD read/write staging buffer (web server task)
 #define WUI_JOB_BUF         (16 * 1024)          // same, for background copy/hash/firmware jobs
