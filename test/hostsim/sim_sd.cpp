@@ -86,8 +86,30 @@ bool SDFS::begin(uint8_t, SPIClass &, uint32_t, const char *, uint8_t, bool) {
   struct stat st;
   return stat(wui_sim_root.c_str(), &st) == 0 && S_ISDIR(st.st_mode);
 }
-uint64_t SDFS::totalBytes() { struct statvfs v; return statvfs(wui_sim_root.c_str(), &v) ? 0 : (uint64_t)v.f_blocks * v.f_frsize; }
-uint64_t SDFS::usedBytes() { struct statvfs v; return statvfs(wui_sim_root.c_str(), &v) ? 0 : (uint64_t)(v.f_blocks - v.f_bfree) * v.f_frsize; }
+// --card-gb N pretends to be an N GB card (used = what the folder holds);
+// otherwise the host filesystem's own numbers.
+uint64_t wui_sim_card_bytes = 0;
+static uint64_t treeSize(const std::string &dir) {
+  uint64_t total = 0;
+  if (DIR *d = opendir(dir.c_str())) {
+    while (struct dirent *e = readdir(d)) {
+      if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, "..")) continue;
+      std::string p = dir + "/" + e->d_name;
+      struct stat st;
+      if (stat(p.c_str(), &st) == 0) total += S_ISDIR(st.st_mode) ? treeSize(p) : (uint64_t)st.st_size;
+    }
+    closedir(d);
+  }
+  return total;
+}
+uint64_t SDFS::totalBytes() {
+  if (wui_sim_card_bytes) return wui_sim_card_bytes;
+  struct statvfs v; return statvfs(wui_sim_root.c_str(), &v) ? 0 : (uint64_t)v.f_blocks * v.f_frsize;
+}
+uint64_t SDFS::usedBytes() {
+  if (wui_sim_card_bytes) return treeSize(wui_sim_root);
+  struct statvfs v; return statvfs(wui_sim_root.c_str(), &v) ? 0 : (uint64_t)(v.f_blocks - v.f_bfree) * v.f_frsize;
+}
 File SDFS::open(const String &path, const char *mode) { auto i = openImpl(path.c_str(), mode); return i ? File(i) : File(); }
 bool SDFS::exists(const String &path) { struct stat st; return stat(host(path.c_str()).c_str(), &st) == 0; }
 bool SDFS::mkdir(const String &path) { return ::mkdir(host(path.c_str()).c_str(), 0755) == 0; }

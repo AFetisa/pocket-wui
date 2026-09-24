@@ -29,6 +29,12 @@ jobs:
       - name: Host tests
         run: make -C test host
 
+      - name: Simulator end-to-end tests (real server code, API + browser)
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+          make -C test sim
+
       - name: Build firmware
         run: pio run
 

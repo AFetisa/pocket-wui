@@ -84,6 +84,12 @@ esp_err_t hLogout(httpd_req_t *req) {
   return sendOk(req);
 }
 
+// Whether this browser is signed in — 200 either way, so the sign-in page can
+// ask without an error showing up in the browser console.
+esp_err_t hSession(httpd_req_t *req) {
+  return sendJson(req, "200 OK", String("{\"signed_in\":") + b(authed(req)) + "}");
+}
+
 // ------------------------------------------------------------------ status
 
 esp_err_t hStatus(httpd_req_t *req) {
@@ -238,7 +244,7 @@ esp_err_t hFwCheck(httpd_req_t *req) {
   String err;
   bool ok = wui_check_app_image(head, n, info, err);
   return sendJson(req, "200 OK",
-                  String("{\"ok\":") + b(ok) + ",\"error\":\"" + jsonEscape(err) + "\",\"size\":" +
+                  String("{\"ok\":") + b(ok) + ",\"reason\":\"" + jsonEscape(err) + "\",\"size\":" +
                   String((unsigned long long)size) + ",\"version\":\"" + jsonEscape(info.version) +
                   "\",\"launcher\":" + b(fw::underLauncher()) + ",\"can_update\":" + b(fw::canSelfUpdate()) + "}");
 }
@@ -278,6 +284,7 @@ void registerDevice(httpd_handle_t h) {
   reg(h, "/login",            HTTP_GET,  hQrLogin);
   reg(h, "/api/login",        HTTP_POST, hLogin);
   reg(h, "/api/logout",       HTTP_POST, hLogout);
+  reg(h, "/api/session",      HTTP_GET,  hSession);
   reg(h, "/api/status",       HTTP_GET,  hStatus);
   reg(h, "/api/wifi",         HTTP_POST, hWifi);
   reg(h, "/api/wifi/scan",    HTTP_GET,  hWifiScan);

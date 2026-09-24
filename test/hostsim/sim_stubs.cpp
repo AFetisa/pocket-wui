@@ -40,7 +40,7 @@ bool setApPassword(const String &pw, String &err) {
   g_apPass = pw;
   return true;
 }
-String ssid() { return "SimNet"; }
+String ssid() { return "Home Wi-Fi"; }
 String ip() { return "127.0.0.1"; }
 int rssi() { return -52; }
 String hostname() { return g_host; }
@@ -59,7 +59,7 @@ bool forget(const String &s) {
   return false;
 }
 bool scanJson(String &out, String &err) {
-  out = "[{\"ssid\":\"SimNet\",\"rssi\":-52,\"secure\":true,\"saved\":true},"
+  out = "[{\"ssid\":\"Home Wi-Fi\",\"rssi\":-52,\"secure\":true,\"saved\":true},"
         "{\"ssid\":\"Cafe Guest\",\"rssi\":-71,\"secure\":false,\"saved\":false},"
         "{\"ssid\":\"Neighbour 5G\",\"rssi\":-83,\"secure\":true,\"saved\":false}]";
   return true;

@@ -18,7 +18,6 @@ void setup() {
   cfg.internal_spk = false;
   cfg.internal_mic = false;
   M5.begin(cfg);                       // auto-detects Cardputer / Cardputer ADV
-  Serial.begin(115200);
 
   ui::begin();
   auth::begin();
@@ -36,9 +35,9 @@ void setup() {
   }
 
   ui::draw();
-  Serial.printf("\n%s v%s ready on http://%s/\n", WUI_NAME, WUI_FW_VERSION, net::ip().c_str());
-  if (auth::isFreshPassword())
-    Serial.printf("first-boot password: %s  (change it in Settings)\n", auth::freshPassword().c_str());
+  // No USB serial console in this build (the port is the network adapter), so
+  // everything a user needs — address, first-boot password — is on the screen.
+  log_i("%s v%s ready on http://%s/", WUI_NAME, WUI_FW_VERSION, net::ip().c_str());
 }
 
 void loop() {

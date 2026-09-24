@@ -17,7 +17,8 @@ $(OUT)/%: host/%.cpp host/arduino_shim.h $(wildcard ../src/*.cpp) $(wildcard ../
 
 sim:
 	$(MAKE) -C hostsim
-	python3 e2e/test_sim.py
+	python3 e2e/test_api.py
+	node e2e/test_ui.mjs
 
 all: host sim
 

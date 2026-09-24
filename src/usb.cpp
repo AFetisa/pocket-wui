@@ -6,6 +6,9 @@
 #include <Preferences.h>
 
 #if WUI_USB
+#if ARDUINO_USB_MODE != 0 || ARDUINO_USB_CDC_ON_BOOT != 0
+#error "USB features need ARDUINO_USB_MODE=0 (USB-OTG/TinyUSB) and ARDUINO_USB_CDC_ON_BOOT=0 — see platformio.ini"
+#endif
 #include <EspUsbDevice.h>
 #include <SD.h>
 

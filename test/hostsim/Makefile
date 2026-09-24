@@ -24,7 +24,8 @@ build/%.o: %.cpp $(wildcard include/*.h)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 run: pocketwui-sim
-	./pocketwui-sim --root /tmp/pocketwui-sd
+	python3 ../e2e/make_demo_card.py /tmp/pocketwui-sd
+	./pocketwui-sim --root /tmp/pocketwui-sd --card-gb 32
 
 clean:
 	rm -rf build pocketwui-sim

@@ -12,6 +12,7 @@
 
 extern int wui_sim_verbose;
 extern int wui_sim_port;
+extern uint64_t wui_sim_card_bytes;
 
 int main(int argc, char **argv) {
   String password = "test1234";
@@ -20,8 +21,9 @@ int main(int argc, char **argv) {
     if (a == "--root" && i + 1 < argc) wui_sim_root = argv[++i];
     else if (a == "--port" && i + 1 < argc) wui_sim_port = atoi(argv[++i]);
     else if (a == "--password" && i + 1 < argc) password = argv[++i];
+    else if (a == "--card-gb" && i + 1 < argc) wui_sim_card_bytes = (uint64_t)(atof(argv[++i]) * 1e9);
     else if (a == "-v") wui_sim_verbose = 1;
-    else { fprintf(stderr, "usage: %s [--root DIR] [--port N] [--password PW] [-v]\n", argv[0]); return 2; }
+    else { fprintf(stderr, "usage: %s [--root DIR] [--port N] [--password PW] [--card-gb N] [-v]\n", argv[0]); return 2; }
   }
   auth::begin();
   String err;
