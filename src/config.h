@@ -17,6 +17,13 @@
 #define WUI_LOCKOUT_MS      60000
 #define WUI_MIN_PASSWORD    8
 
+// QR sign-in: the device screen shows a QR of http://<ip>/login?k=<token>.
+// The token is single-use, only exists while that screen is up, and is replaced
+// after this long even if nobody scans it. Set WUI_QR_LOGIN to 0 to drop the
+// feature entirely (the /login route then always refuses).
+#define WUI_QR_LOGIN        1
+#define WUI_QR_TOKEN_TTL_MS 120000
+
 #define WUI_IO_BUF          (24 * 1024)          // SD read/write staging buffer
 #define WUI_MAX_PATH        192                  // FAT full-path budget
 #define WUI_IDLE_FILE_MS    8000                 // close a cached upload handle after

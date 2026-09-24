@@ -183,6 +183,14 @@ esp_err_t hIndex(httpd_req_t *req) {
   return httpd_resp_send(req, (const char *)WEB_INDEX_GZ, WEB_INDEX_GZ_LEN);
 }
 
+// The header value must outlive the call that sends the response, hence static.
+void setSessionCookie(httpd_req_t *req) {
+  static String cookie;
+  cookie = "wui=" + auth::newSession() + "; Path=/; HttpOnly; SameSite=Strict; Max-Age=" +
+           String(WUI_SESSION_TTL_S);
+  httpd_resp_set_hdr(req, "Set-Cookie", cookie.c_str());
+}
+
 esp_err_t hLogin(httpd_req_t *req) {
   if (auth::lockedOut())
     return sendErr(req, "429 Too Many Requests", "too many attempts — wait a minute");
@@ -194,11 +202,29 @@ esp_err_t hLogin(httpd_req_t *req) {
     return sendErr(req, "401 Unauthorized", "wrong password");
   }
   auth::noteSuccess();
-  String tok = auth::newSession();
-  String cookie = "wui=" + tok + "; Path=/; HttpOnly; SameSite=Strict; Max-Age=" +
-                  String(WUI_SESSION_TTL_S);
-  httpd_resp_set_hdr(req, "Set-Cookie", cookie.c_str());
+  setSessionCookie(req);
   return sendOk(req);
+}
+
+// GET /login?k=<token> — the URL inside the on-screen sign-in QR. A good token
+// becomes a session cookie and a redirect to the UI; anything else lands on the
+// normal password prompt with a hint about why.
+esp_err_t hQrLogin(httpd_req_t *req) {
+  const char *to = "/";
+  if (auth::lockedOut()) {
+    to = "/?qr=locked";
+  } else if (auth::consumeLoginToken(query(req, "k"))) {
+    auth::noteSuccess();
+    setSessionCookie(req);
+  } else {
+    auth::noteFailure();
+    to = "/?qr=expired";
+  }
+  httpd_resp_set_status(req, "302 Found");
+  httpd_resp_set_hdr(req, "Location", to);
+  httpd_resp_set_hdr(req, "Cache-Control", "no-store");
+  httpd_resp_set_hdr(req, "Referrer-Policy", "no-referrer");
+  return httpd_resp_send(req, nullptr, 0);
 }
 
 esp_err_t hLogout(httpd_req_t *req) {
@@ -525,6 +551,7 @@ bool begin() {
   reg("/api/status",    HTTP_GET,  hStatus);
   reg("/api/list",      HTTP_GET,  hList);
   reg("/api/download",  HTTP_GET,  hDownload);
+  reg("/login",         HTTP_GET,  hQrLogin);
   reg("/api/login",     HTTP_POST, hLogin);
   reg("/api/logout",    HTTP_POST, hLogout);
   reg("/api/mkdir",     HTTP_POST, hMkdir);

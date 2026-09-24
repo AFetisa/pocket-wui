@@ -70,6 +70,21 @@ class H(BaseHTTPRequestHandler):
     # -- routes -----------------------------------------------------------
     def do_GET(self):
         route = urllib.parse.urlparse(self.path).path
+        if route == "/login":                      # the on-screen sign-in QR
+            global QR_TOKEN
+            ok = self.q("k") == QR_TOKEN
+            extra = {"Location": "/" if ok else "/?qr=expired", "Content-Length": "0"}
+            if ok:
+                tok = secrets.token_hex(16)
+                SESSIONS.add(tok)
+                extra["Set-Cookie"] = "wui=%s; Path=/; HttpOnly; SameSite=Strict" % tok
+                QR_TOKEN = secrets.token_urlsafe(18)
+                print("QR sign-in used; next link: http://127.0.0.1:%d/login?k=%s" % (PORT, QR_TOKEN))
+            self.send_response(302)
+            for k, v in extra.items():
+                self.send_header(k, v)
+            self.end_headers()
+            return
         if route == "/":
             raw = open(os.path.join(HERE, "web", "index.html"), "rb").read()
             self.send_response(200)
@@ -231,7 +246,9 @@ if __name__ == "__main__":
     ap.add_argument("--port", type=int, default=8791)
     ap.add_argument("--password", default="test1234")
     a = ap.parse_args()
-    ROOT, PASSWORD = os.path.abspath(a.root), a.password
+    ROOT, PASSWORD, PORT = os.path.abspath(a.root), a.password, a.port
+    QR_TOKEN = secrets.token_urlsafe(18)
     os.makedirs(ROOT, exist_ok=True)
     print("WUI mock on http://127.0.0.1:%d/  root=%s  password=%s" % (a.port, ROOT, PASSWORD))
+    print("QR sign-in link (single use): http://127.0.0.1:%d/login?k=%s" % (a.port, QR_TOKEN))
     ThreadingHTTPServer(("127.0.0.1", a.port), H).serve_forever()

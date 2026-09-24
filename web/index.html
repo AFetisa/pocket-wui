@@ -574,9 +574,15 @@ async function boot(){
   setInterval(refreshStatus,15000);
 }
 (async function(){
+  // Arriving from the on-screen sign-in QR: /login?k=... redirects here, with
+  // ?qr=... only when the code was refused. Drop the query either way.
+  const qr=new URLSearchParams(location.search).get("qr");
+  if(location.search) history.replaceState(null,"","/");
   try{ const r=await fetch("/api/status",{credentials:"same-origin"});
        if(r.ok){ showApp(); boot(); return; } }catch(e){}
   showLogin();
+  if(qr==="expired") $("#loginMsg").textContent="That QR code was already used or has expired. Scan the new one on the Cardputer, or enter the password.";
+  else if(qr==="locked") $("#loginMsg").textContent="Too many attempts. Wait a minute, then try again.";
 })();
 </script>
 </body>

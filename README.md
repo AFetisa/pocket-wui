@@ -42,8 +42,10 @@ built-in command line.
   `put`, `df`, `info`, `wifi`, `passwd`, `reboot`, with history on ↑/↓. `Ctrl-`` toggles it.
 - **Self-contained.** The whole UI is one gzipped 8 KB page embedded in the firmware:
   no CDN, no fonts to fetch, nothing to install. It works with no internet at all.
-- **On-device display** shows the SSID, URL, SD usage, the first-boot password, and a
-  QR code of the URL (press the button to flip between the two).
+- **Scan to connect.** The button steps through two QR codes on the device screen:
+  one joins the Cardputer's Wi-Fi (access-point mode only), the other opens the WUI
+  **already signed in**. See [QR sign-in](#qr-sign-in).
+- **On-device display** shows the SSID, URL, SD usage and the first-boot password.
 
 ## Hardware
 
@@ -82,6 +84,33 @@ at `0x10000`, and the launcher cannot run it.
    It rejoins as a station; from then on reach it at `http://cardputer.local/` or the IP
    shown on the screen. If the saved network disappears, the AP comes back automatically.
 
+## QR sign-in
+
+Press the side button to step through the screens: **info → join Wi-Fi → sign in → info**.
+
+| Screen | QR contents | What the phone does |
+|---|---|---|
+| join Wi-Fi (AP mode only) | `WIFI:T:WPA;S:Cardputer-WUI;P:<ap key>;;` | Offers to join the Cardputer's network |
+| sign in | `http://<ip>/login?k=<token>` | Opens the WUI with a session cookie, no password |
+
+In AP mode that is two scans from a fresh phone to a signed-in file manager. In
+station mode the Wi-Fi screen is skipped: your phone is already on the same network,
+and the home Wi-Fi key is never put on the screen.
+
+The sign-in code is built to be as safe as the password on the screen next to it:
+
+- **Single use.** The first successful scan uses it up, and a new code appears straight away.
+- **Short-lived.** It is replaced after 2 minutes (`WUI_QR_TOKEN_TTL_MS`) even if nobody scans it.
+- **Only while shown.** The token exists only while the sign-in screen is up. Leaving
+  that screen, or changing the password, invalidates it.
+- 24 random characters (~143 bits), held in RAM only, compared in constant time. Bad
+  codes count toward the same lockout as bad passwords.
+- A used or expired code lands on the normal password prompt with a note saying so.
+
+Anyone who can photograph the screen can sign in, just as they could read the
+first-boot password off it. If you don't want this, set `WUI_QR_LOGIN 0` in
+`src/config.h`.
+
 Hold the Cardputer's side button for 5 seconds to factory-reset the password and the
 saved Wi-Fi credentials (an on-screen countdown warns you first). That button is
 `M5.BtnA`; if M5Unified does not map it on your ADV unit, `esptool.py erase_flash`
@@ -97,6 +126,9 @@ salted SHA-256 hash and erases the plaintext copy, so do that once you are in.
 python3 tools/mock_server.py --root /tmp/fakesd --password test1234
 # -> http://127.0.0.1:8791/
 ```
+
+The mock also prints a single-use QR sign-in link (`/login?k=...`), and a fresh one each
+time a link is used, so you can try that flow in a browser.
 
 The mock speaks the identical API against a local folder — the same paths, JSON,
 chunked-upload and Range semantics — so the interface can be used and iterated on
@@ -154,7 +186,8 @@ src/net.*               station/AP handling, mDNS, credential storage
 src/storage.*           SD mount from M5Unified's pin map, path locking, upload handles
 src/server.*            esp_http_server handlers
 src/paths.*             path sanitiser (everything from the network goes through this)
-src/ui.*                on-device screen: status, QR code, factory reset
+src/ui.*                on-device screen: status, Wi-Fi / sign-in QR codes, factory reset
+src/qrtext.*            Wi-Fi QR payload builder (escaping per the WIFI: format)
 test/host/              host tests: the path sanitiser and the browser upload loop
 build/                  prebuilt firmware images
 ```
@@ -165,6 +198,7 @@ build/                  prebuilt firmware images
 pio run                                     # build
 python3 tools/embed_web.py                  # re-embed the UI on its own
 g++ -std=c++17 -I test/host -o /tmp/t test/host/test_paths.cpp && /tmp/t   # path tests
+g++ -std=c++17 -I test/host -o /tmp/q test/host/test_qrtext.cpp && /tmp/q  # Wi-Fi QR payload
 node test/host/test_upload.mjs              # browser upload loop
 ```
 
@@ -196,6 +230,14 @@ byte-identical download, `Range` request, stale-offset resync, recursive delete 
 exercised end-to-end against `tools/mock_server.py`. Note what that does and does not
 prove: the mock is a **reimplementation** of the same contract, so those runs validate
 the API shape and the browser UI against it, not the C++ handlers in `src/server.cpp`.
+
+The QR sign-in (`src/auth.cpp` token, `/login`, the two QR screens) has **not been
+compiled for the ESP32 yet**: the environment it was written in could not download the
+PlatformIO toolchain, so `build/firmware.bin` predates it. What was checked: the token
+logic (single use, expiry, disarm) in a host build of the real `src/auth.cpp` against
+stubs, the Wi-Fi payload escaping in `test/host/test_qrtext.cpp`, and in Chromium
+against the mock that a link signs you in once and a reused one falls back to the
+password prompt with its note. Run `pio run` before flashing.
 
 **It has not been run on a physical Cardputer ADV** — no device was attached to the
 machine that built it. Expect to verify the SD mount and the screen layout on first flash.

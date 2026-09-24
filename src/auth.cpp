@@ -15,6 +15,16 @@ bool     g_isFresh = false;
 struct Session { char token[33]; uint32_t expires; };
 Session g_sessions[WUI_MAX_SESSIONS] = {};
 
+// QR sign-in token, RAM only. The screen (loop task) arms it and the web
+// server (httpd task) consumes it, so every touch goes through g_loginMux.
+char        g_login[25] = {0};
+uint32_t    g_loginAt = 0;
+portMUX_TYPE g_loginMux = portMUX_INITIALIZER_UNLOCKED;
+
+bool loginArmedLocked() {
+  return g_login[0] != 0 && millis() - g_loginAt < WUI_QR_TOKEN_TTL_MS;
+}
+
 uint8_t  g_fails = 0;
 uint32_t g_lockUntil = 0;
 
@@ -102,6 +112,7 @@ bool setPassword(const String &pw, String &err) {
   g_isFresh = false;
   g_fresh = "";
   dropAllSessions();
+  disarmLoginToken();
   return true;
 }
 
@@ -135,6 +146,47 @@ void dropSession(const String &t) {
 }
 
 void dropAllSessions() { memset(g_sessions, 0, sizeof(g_sessions)); }
+
+String loginToken() {
+  // Generated outside the lock: no allocation inside a critical section.
+  String fresh = randomString(24, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+  char out[sizeof(g_login)];
+  portENTER_CRITICAL(&g_loginMux);
+  if (!loginArmedLocked()) {
+    strlcpy(g_login, fresh.c_str(), sizeof(g_login));
+    g_loginAt = millis();
+  }
+  memcpy(out, g_login, sizeof(out));
+  portEXIT_CRITICAL(&g_loginMux);
+  return String(out);
+}
+
+uint32_t loginTokenMsLeft() {
+  portENTER_CRITICAL(&g_loginMux);
+  uint32_t left = loginArmedLocked() ? WUI_QR_TOKEN_TTL_MS - (millis() - g_loginAt) : 0;
+  portEXIT_CRITICAL(&g_loginMux);
+  return left;
+}
+
+void disarmLoginToken() {
+  portENTER_CRITICAL(&g_loginMux);
+  memset(g_login, 0, sizeof(g_login));
+  portEXIT_CRITICAL(&g_loginMux);
+}
+
+bool consumeLoginToken(const String &t) {
+#if WUI_QR_LOGIN
+  if (t.length() != sizeof(g_login) - 1) return false;
+  portENTER_CRITICAL(&g_loginMux);
+  bool ok = loginArmedLocked() && constEqStr(g_login, t.c_str());
+  if (ok) memset(g_login, 0, sizeof(g_login));   // single use; the screen shows a new one
+  portEXIT_CRITICAL(&g_loginMux);
+  return ok;
+#else
+  (void)t;
+  return false;
+#endif
+}
 
 bool lockedOut() { return g_lockUntil && (int32_t)(millis() - g_lockUntil) < 0; }
 void noteFailure() {
