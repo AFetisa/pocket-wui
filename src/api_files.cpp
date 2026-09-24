@@ -249,6 +249,9 @@ esp_err_t hUpload(httpd_req_t *req) {
   uint64_t offset = strtoull(query(req, "offset").c_str(), nullptr, 10);
   bool final_ = query(req, "final") == "1";
 
+  // Held from before we take the handle until we return, so the idle closer
+  // in loop() never shuts the file under us.
+  struct Busy { Busy() { storage::uploadBusy(true); } ~Busy() { storage::uploadBusy(false); } } busy;
   uint64_t actual = 0;
   String err;
   File *f;

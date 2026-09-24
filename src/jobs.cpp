@@ -98,7 +98,7 @@ bool startHash(const String &path, String &err) {
       if (got <= 0) break;
       mbedtls_sha256_update(&ctx, buf, got);
       if (!progress(got)) { cancelled = true; break; }
-      delay(0);
+      delay(1);               // yield: hashing never blocks, and the watchdog is watching
     }
     uint8_t out[32];
     mbedtls_sha256_finish(&ctx, out);

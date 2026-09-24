@@ -56,9 +56,10 @@ bool flashFromFile(const String &path, uint8_t *buf, size_t bufLen, const Progre
     if (got <= 0) break;
     if (Update.write(buf, got) != (size_t)got) { err = String("write failed: ") + Update.errorString(); ok = false; }
     else if (progress && !progress(got, size)) { err = "cancelled"; ok = false; }
-    delay(0);
+    delay(1);
   }
   { storage::Guard g; f.close(); }
+  if (ok && Update.progress() != size) { err = "could not read the whole file from the card"; ok = false; }
   if (!ok) { Update.abort(); return false; }
   if (!Update.end(true)) { err = String("verify failed: ") + Update.errorString(); return false; }
   return true;

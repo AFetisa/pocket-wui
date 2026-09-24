@@ -12,7 +12,7 @@ inline bool wui_spawn(const char *name, size_t stack, std::function<void()> fn) 
 #ifdef ESP_PLATFORM
   esp_pthread_cfg_t cfg = esp_pthread_get_default_config();
   cfg.stack_size = stack;
-  cfg.prio = 4;
+  cfg.prio = 1;               // same as loop(): background work never starves the UI
   cfg.thread_name = name;
   cfg.inherit_cfg = false;
   esp_pthread_set_cfg(&cfg);

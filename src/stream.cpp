@@ -34,7 +34,7 @@ bool handOff(httpd_req_t *req, std::function<void(httpd_req_t *, uint8_t *)> wor
     g_active--;
     return false;
   }
-  bool ok = wui_spawn("wui-stream", 6144, [copy, buf, work]() {
+  bool ok = wui_spawn("wui-stream", 8192, [copy, buf, work]() {
     work(copy, buf);
     httpd_req_async_handler_complete(copy);
     free(buf);
@@ -69,6 +69,9 @@ void pumpFile(httpd_req_t *req, const FileJob &job, uint8_t *buf, size_t bufLen)
     left -= got;
     delay(0);
   }
+  // Fewer bytes than the Content-Length promised (read error): close, or the
+  // client waits forever on a keep-alive connection for the rest.
+  if (left) httpd_sess_trigger_close(req->handle, httpd_req_to_sockfd(req));
   storage::Guard g;
   f.close();
 }

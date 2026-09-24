@@ -439,3 +439,10 @@ esp_err_t httpd_req_async_handler_complete(httpd_req_t *r) {
   delete r;
   return ESP_OK;
 }
+
+int httpd_req_to_sockfd(httpd_req_t *r) { return aux(r)->fd; }
+
+esp_err_t httpd_sess_trigger_close(httpd_handle_t, int fd) {
+  shutdown(fd, SHUT_RDWR);      // the loop sees the hang-up and drops the session
+  return ESP_OK;
+}

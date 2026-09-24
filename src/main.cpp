@@ -12,6 +12,12 @@
 #include "storage.h"
 #include "ui.h"
 #include "usb.h"
+#include <esp_ota_ops.h>
+
+// A freshly installed update stays "pending verify" until this build proves it
+// can bring the web server up; if it crashes before that, the bootloader rolls
+// back to the previous version. (Arduino would otherwise confirm it before setup().)
+extern "C" bool verifyRollbackLater() { return true; }
 
 void setup() {
   auto cfg = M5.config();
@@ -26,12 +32,16 @@ void setup() {
     log_w("continuing without an SD card — insert one and it is picked up");
 
   usb::begin();                        // after the card, so the USB drive can offer it
+  ui::draw();
+  ui::toast("connecting to Wi-Fi...");  // joining can take a few seconds per network
   net::begin();
 
   if (!server::begin()) {
     M5.Display.fillScreen(0);
     M5.Display.setCursor(6, 40);
     M5.Display.print("http server failed");
+  } else {
+    esp_ota_mark_app_valid_cancel_rollback();
   }
 
   ui::draw();

@@ -92,5 +92,7 @@ esp_err_t httpd_req_get_hdr_value_str(httpd_req_t *r, const char *field, char *v
 int httpd_req_recv(httpd_req_t *r, char *buf, size_t buf_len);
 int httpd_send(httpd_req_t *r, const char *buf, size_t buf_len);
 
+int httpd_req_to_sockfd(httpd_req_t *r);
+esp_err_t httpd_sess_trigger_close(httpd_handle_t handle, int sockfd);
 esp_err_t httpd_req_async_handler_begin(httpd_req_t *r, httpd_req_t **out);
 esp_err_t httpd_req_async_handler_complete(httpd_req_t *r);

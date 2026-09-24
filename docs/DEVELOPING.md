@@ -188,6 +188,16 @@ USB drive is always present but reports "no media" until you lend the card.
 While it's lent, every file endpoint answers `423`, and handing it back
 remounts the card to drop stale FAT caches.
 
+**Updates roll back.** A self-installed update stays "pending" until it has
+brought the web server up (`verifyRollbackLater()` + `esp_ota_mark_app_valid_cancel_rollback()`).
+If it crashes first, the bootloader returns to the previous version.
+
+**USB drive safety.** The host's sector reads and writes run under the same SD
+lock as everything else, and only while the card is lent. Taking the card back
+flips that state under the lock, so no transfer is in flight when the card is
+remounted. A card that is missing or swapped since start-up is never offered.
+Pulling the cable hands the card back automatically after 3 s.
+
 **Launcher.** M5Launcher lives in an app partition of subtype `test`. When
 that exists, PocketWUI never flashes anything itself: it could overwrite
 another installed app. "Back to Launcher" is a 200 ms deep sleep, which
@@ -214,3 +224,10 @@ standalone, `partitions.csv` provides two 3 MB app slots, and
 - WebDAV `PUT` with chunked encoding (macOS Finder) is refused.
 - One background job at a time; two background download streams.
 - Folder ZIPs are limited to `WUI_ZIP_MAX_ENTRIES` (4000) items per download.
+- Joining a home network from a phone that is on the Cardputer's hotspot can
+  drop that phone: the hotspot moves to the home network's channel. The new
+  address is on the device screen.
+- The captive-portal DNS answers on every interface (arduino-esp32 3.x's
+  DNSServer binds to all of them). Only the hotspot's clients ever ask it.
+- At boot, joining saved networks blocks start-up for up to ~12 s per network
+  in range. The screen says so.

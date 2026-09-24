@@ -9,10 +9,15 @@
 #include <esp_random.h>
 #include <esp_sntp.h>
 #include <sys/time.h>
+#include <mutex>
 
 namespace {
 
 Preferences prefs;
+// join/forget/scan/settings run on the web server task, tick() on the loop
+// task: one lock for all Wi-Fi state. tick() only try-locks, so a join in
+// progress (up to WUI_STA_TIMEOUT_MS) simply pauses the rejoin machinery.
+std::recursive_mutex g_mu;
 String   g_apPass, g_apSsid, g_host, g_tz = "UTC0";
 bool     g_apUp = false;
 bool     g_keepAp = false;
@@ -182,6 +187,8 @@ void begin() {
 }
 
 void tick() {
+  std::unique_lock<std::recursive_mutex> lk(g_mu, std::try_to_lock);
+  if (!lk.owns_lock()) return;
   if (g_dnsOn) g_dns.processNextRequest();
   uint32_t now = millis();
   bool linked = WiFi.status() == WL_CONNECTED;
@@ -200,6 +207,7 @@ void tick() {
   }
 
   if (linked) {
+    g_lostAt = 0;                               // a short drop healed by auto-reconnect
     if (!g_wasLinked) onLinked();
     // Back on the home network: drop the AP we raised for the outage, but never
     // while someone is still on it.
@@ -215,6 +223,9 @@ void tick() {
     g_wasLinked = false;
     log_w("station link lost — raising the AP");
     if (!g_apUp) startAP();
+    // The station's own auto-reconnect scans forever, off-channel, which
+    // stalls phones on the AP. From here our rotation alone drives the station.
+    WiFi.disconnect(false, true);
     g_nextTry = now;
   }
 
@@ -240,6 +251,7 @@ String hostname() { return g_host; }
 bool keepAp()     { return g_keepAp; }
 
 bool setApPassword(const String &pw, String &err) {
+  std::lock_guard<std::recursive_mutex> lk(g_mu);
   if (pw.length() < 8 || pw.length() > 63) { err = "the Wi-Fi key must be 8–63 characters"; return false; }
   g_apPass = pw;
   prefs.putString("appass", pw);
@@ -248,6 +260,7 @@ bool setApPassword(const String &pw, String &err) {
 }
 
 bool setHostname(const String &name, String &err) {
+  std::lock_guard<std::recursive_mutex> lk(g_mu);
   String n = name;
   n.toLowerCase();
   if (n.isEmpty() || n.length() > 32) { err = "name must be 1–32 characters"; return false; }
@@ -266,6 +279,7 @@ bool setHostname(const String &name, String &err) {
 }
 
 void setKeepAp(bool on) {
+  std::lock_guard<std::recursive_mutex> lk(g_mu);
   g_keepAp = on;
   prefs.putBool("keepap", on);
   if (on && !g_apUp) startAP();
@@ -273,6 +287,7 @@ void setKeepAp(bool on) {
 }
 
 bool join(const String &s, const String &p, String &err) {
+  std::lock_guard<std::recursive_mutex> lk(g_mu);
   if (s.isEmpty()) { err = "network name required"; return false; }
   g_trying = false;
   // Keep the AP up while we try, so a phone configuring us from the AP keeps
@@ -296,12 +311,14 @@ bool join(const String &s, const String &p, String &err) {
 }
 
 std::vector<String> savedNetworks() {
+  std::lock_guard<std::recursive_mutex> lk(g_mu);
   std::vector<String> out;
   for (auto &e : loadSaved()) out.push_back(e.first);
   return out;
 }
 
 bool forget(const String &s) {
+  std::lock_guard<std::recursive_mutex> lk(g_mu);
   auto v = loadSaved();
   size_t before = v.size();
   v.erase(std::remove_if(v.begin(), v.end(), [&](auto &e) { return e.first == s; }), v.end());
@@ -310,6 +327,7 @@ bool forget(const String &s) {
 }
 
 bool scanJson(String &out, String &err) {
+  std::lock_guard<std::recursive_mutex> lk(g_mu);
   if (g_trying) { err = "busy reconnecting — try again in a few seconds"; return false; }
   int n = WiFi.scanNetworks(false, false);
   if (n < 0) { err = "scan failed"; return false; }

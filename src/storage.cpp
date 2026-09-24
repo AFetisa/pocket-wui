@@ -3,6 +3,7 @@
 #include <M5Unified.h>
 #include <SD.h>
 #include <SPI.h>
+#include <atomic>
 #include <mutex>
 #include <vector>
 
@@ -33,6 +34,7 @@ bool probeCard() {
 }
 
 volatile bool g_lent = false;   // SD card handed to the USB host
+std::atomic<bool> g_upBusy{false};  // an upload handler is using g_up right now
 
 File     g_up;                  // cached upload handle
 String   g_upPath;
@@ -62,6 +64,7 @@ bool begin() {
   // device answers on MISO too and corrupts SD traffic. Every firmware proven
   // on this hardware deselects it first. (On the v1.1, G5 is a keyboard line —
   // leave it alone there.)
+  Guard g;                      // the bus re-init too: nobody may be mid-transfer
   if (M5.getBoard() == m5::board_t::board_M5CardputerADV) {
     pinMode(5, OUTPUT);
     digitalWrite(5, HIGH);
@@ -69,7 +72,6 @@ bool begin() {
   }
   SPI.end();
   SPI.begin(g_sck, g_miso, g_mosi, g_cs);
-  Guard g;
   // Fastest clock that survives a write/read-back wins. 4 MHz is the floor the
   // sibling firmwares run on this unit, so it stays mounted even if its probe
   // fails (a full or write-protected card still browses). SDFS::begin() returns
@@ -95,8 +97,7 @@ uint32_t clockHz() { return g_mounted ? g_hz : 0; }
 bool mounted() { return g_mounted; }
 
 bool remount() {
-  closeUpload(true);
-  { Guard g; SD.end(); g_mounted = false; }
+  { Guard g; closeUpload(true); SD.end(); g_mounted = false; }
   return begin();
 }
 
@@ -175,11 +176,14 @@ void closeUpload(bool force) {
 }
 
 void tickUploadIdle() {
-  if (g_up && (millis() - g_upTouched) > WUI_IDLE_FILE_MS) {
-    Guard g;
-    closeUpload(true);
-  }
+  // Never while a handler holds the handle: it may be waiting on a slow client
+  // for longer than the idle limit, and would then write into a closed file.
+  if (g_upBusy) return;
+  Guard g;
+  if (g_up && !g_upBusy && (millis() - g_upTouched) > WUI_IDLE_FILE_MS) closeUpload(true);
 }
+
+void uploadBusy(bool busy) { g_upBusy = busy; if (!busy) g_upTouched = millis(); }
 
 bool listDir(const String &path, std::vector<DirEntry> &out) {
   out.clear();
@@ -284,7 +288,7 @@ static bool copyFile(const String &from, const String &to, uint8_t *buf, size_t 
     if (r <= 0) break;
     if (w != (size_t)r) { err = "short write — card full?"; ok = false; break; }
     if (progress && !progress(r)) { err = "cancelled"; ok = false; break; }
-    delay(0);
+    delay(1);                 // SD and SPI poll rather than block: yield, or the watchdog bites
   }
   {
     Guard g;

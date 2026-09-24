@@ -36,6 +36,7 @@ void  uploadWrote(size_t n);   // report accepted bytes. The handle tracks its o
                                // only updates that on flush, so mid-upload it lies.
 void  closeUpload(bool force = false);
 void  tickUploadIdle();      // call from loop(): closes an idle handle
+void  uploadBusy(bool busy); // an upload handler holds the handle (not idle, whatever the clock says)
 
 bool removeRecursive(const String &path, String &err);
 
