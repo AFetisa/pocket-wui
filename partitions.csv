@@ -1,0 +1,9 @@
+# PocketWUI standalone flash layout (8 MB). Two app slots so the web UI can
+# update the firmware in place. Under M5Launcher this file is not used —
+# Launcher keeps its own partition table.
+# Name,   Type, SubType,  Offset,   Size
+nvs,      data, nvs,      0x9000,   0x5000
+otadata,  data, ota,      0xe000,   0x2000
+app0,     app,  ota_0,    0x10000,  0x300000
+app1,     app,  ota_1,    0x310000, 0x300000
+coredump, data, coredump, 0x610000, 0x10000

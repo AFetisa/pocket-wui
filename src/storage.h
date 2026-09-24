@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 #include <FS.h>
+#include <functional>
+#include <vector>
 
 namespace storage {
 
@@ -36,5 +38,29 @@ void  closeUpload(bool force = false);
 void  tickUploadIdle();      // call from loop(): closes an idle handle
 
 bool removeRecursive(const String &path, String &err);
+
+// One directory's children, read in full and closed again (FAT iteration is
+// undefined while entries change underneath an open handle). Caller holds the lock.
+struct DirEntry { String name; bool dir; uint64_t size; time_t mtime; };
+bool listDir(const String &path, std::vector<DirEntry> &out);
+
+// Moves a path into WUI_TRASH_DIR (a rename: instant, whatever the size) under
+// a unique name that keeps the original. Caller holds the lock.
+bool moveToTrash(const String &path, String &err);
+
+// Recursive copy. Takes and releases the lock per chunk, so the web server stays
+// responsive while a long copy runs on another task. `progress(bytes)` is called
+// after each chunk; returning false from it cancels. `buf` is a caller-owned
+// staging buffer. Refuses to copy a folder into itself.
+using CopyProgress = std::function<bool(size_t)>;
+bool copyTree(const String &from, const String &to, uint8_t *buf, size_t bufLen,
+              const CopyProgress &progress, String &err);
+// Total bytes under a path (files only), for progress bars. Locks per directory.
+uint64_t treeBytes(const String &path);
+
+// USB drive mode: while the card is lent to a USB host, nothing on the device
+// may touch the filesystem (requireSD() refuses with 423).
+bool lentToUsb();
+void setLentToUsb(bool lent);
 
 }  // namespace storage

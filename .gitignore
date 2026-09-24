@@ -1,3 +1,7 @@
 .pio/
 .vscode/
 src/web_assets.h
+test/hostsim/build/
+test/hostsim/pocketwui-sim
+dist/
+__pycache__/
