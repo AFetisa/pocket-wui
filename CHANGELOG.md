@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+**New**
+- Join Wi‑Fi from the Cardputer itself: press `w` on the main screen, pick a
+  network (`;` `.` or fn+arrows, `r` rescans, ` goes back), type its key
+  (Tab shows it, fn+` goes back) and press Enter. Joined networks are saved
+  like ones added from the web UI.
+
+**Changed**
+- Uses M5Cardputer 1.2.0 for the keyboard (Cardputer and Cardputer ADV).
+
 ## 2.0.0 — PocketWUI
 
 The WUI grows up and gets a name.

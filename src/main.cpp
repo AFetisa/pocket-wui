@@ -4,7 +4,7 @@
 //
 //   http://cardputer.local/   (or the IP shown on the screen)
 // ---------------------------------------------------------------------------
-#include <M5Unified.h>
+#include <M5Cardputer.h>
 #include "config.h"
 #include "auth.h"
 #include "net.h"
@@ -23,7 +23,7 @@ void setup() {
   auto cfg = M5.config();
   cfg.internal_spk = false;
   cfg.internal_mic = false;
-  M5.begin(cfg);                       // auto-detects Cardputer / Cardputer ADV
+  M5Cardputer.begin(cfg, true);        // M5.begin (auto-detects Cardputer / ADV) + keyboard
 
   ui::begin();
   auth::begin();

@@ -326,7 +326,7 @@ bool forget(const String &s) {
   return v.size() != before;
 }
 
-bool scanJson(String &out, String &err) {
+bool scan(std::vector<ScanResult> &out, String &err) {
   std::lock_guard<std::recursive_mutex> lk(g_mu);
   if (g_trying) { err = "busy reconnecting — try again in a few seconds"; return false; }
   int n = WiFi.scanNetworks(false, false);
@@ -341,17 +341,25 @@ bool scanJson(String &out, String &err) {
     if (!dup) best.push_back(i);
   }
   std::sort(best.begin(), best.end(), [](int a, int b) { return WiFi.RSSI(a) > WiFi.RSSI(b); });
+  out.clear();
+  for (int i : best)
+    out.push_back({WiFi.SSID(i), (int)WiFi.RSSI(i), WiFi.encryptionType(i) != WIFI_AUTH_OPEN,
+                   std::find(saved.begin(), saved.end(), WiFi.SSID(i)) != saved.end()});
+  WiFi.scanDelete();
+  return true;
+}
+
+bool scanJson(String &out, String &err) {
+  std::vector<ScanResult> v;
+  if (!scan(v, err)) return false;
   out = "[";
-  for (size_t k = 0; k < best.size(); ++k) {
-    int i = best[k];
-    bool isSaved = std::find(saved.begin(), saved.end(), WiFi.SSID(i)) != saved.end();
+  for (size_t k = 0; k < v.size(); ++k) {
     out += (k ? "," : "");
-    out += "{\"ssid\":\"" + http::jsonEscape(WiFi.SSID(i)) + "\",\"rssi\":" + String(WiFi.RSSI(i)) +
-           ",\"secure\":" + (WiFi.encryptionType(i) == WIFI_AUTH_OPEN ? "false" : "true") +
-           ",\"saved\":" + (isSaved ? "true" : "false") + "}";
+    out += "{\"ssid\":\"" + http::jsonEscape(v[k].ssid) + "\",\"rssi\":" + String(v[k].rssi) +
+           ",\"secure\":" + (v[k].secure ? "true" : "false") +
+           ",\"saved\":" + (v[k].saved ? "true" : "false") + "}";
   }
   out += "]";
-  WiFi.scanDelete();
   return true;
 }
 

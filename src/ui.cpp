@@ -5,7 +5,7 @@
 #include "storage.h"
 #include "qrtext.h"
 #include "usb.h"
-#include <M5Unified.h>
+#include <M5Cardputer.h>
 #include <Preferences.h>
 
 namespace {
@@ -19,7 +19,8 @@ constexpr uint16_t WARN  = 0xFCC0;
 // The button cycles through these. WIFI_QR only appears in access-point mode:
 // in station mode the phone is already on your network and the home Wi-Fi key
 // should not be on the screen.
-enum Screen { INFO, WIFI_QR, LOGIN_QR };
+// WIFI_PICK / WIFI_PASS join a network from the keyboard ("w" on INFO).
+enum Screen { INFO, WIFI_QR, LOGIN_QR, WIFI_PICK, WIFI_PASS };
 Screen   g_screen = INFO;
 uint32_t g_next = 0;
 uint32_t g_shownSecs = UINT32_MAX;     // countdown last drawn on LOGIN_QR
@@ -31,6 +32,10 @@ uint32_t g_toastUntil = 0;
 uint32_t g_lastInput = 0;              // for dimming
 bool     g_dimmed = false;
 bool     g_driveShown = false;
+std::vector<net::ScanResult> g_nets;   // WIFI_PICK list
+int      g_sel = 0;
+String   g_pass;                       // WIFI_PASS entry, cleared on leaving
+bool     g_showPass = false;
 
 String url() { return "http://" + net::ip() + "/"; }
 
@@ -136,8 +141,67 @@ void drawInfo() {
 
   d.setTextColor(DIM, BG);
   d.setCursor(6, d.height() - 12);
-  d.print(auth::isFreshPassword() ? "btn: QR  |  hold 5s: reset"
-                                  : "btn: QR sign-in");
+  d.print(auth::isFreshPassword() ? "btn: QR  w: wi-fi  hold 5s: reset"
+                                  : "btn: QR sign-in  w: wi-fi");
+}
+
+void drawHeader(const String &title) {
+  auto &d = M5.Display;
+  d.fillScreen(BG);
+  d.fillRect(0, 0, d.width(), 16, 0x0000);
+  d.setTextColor(ACC, 0x0000);
+  d.setCursor(6, 5);
+  d.print(title);
+}
+
+void drawFooter(const char *hint) {
+  auto &d = M5.Display;
+  d.setTextColor(DIM, BG);
+  d.setCursor(6, d.height() - 12);
+  d.print(hint);
+}
+
+void drawWifiPick() {
+  auto &d = M5.Display;
+  drawHeader("join wi-fi");
+  constexpr int ROWS = 7;
+  if (g_nets.empty()) {
+    d.setTextColor(FG, BG); d.setCursor(6, 28); d.print("no networks found");
+  }
+  int first = std::max(0, std::min(g_sel - ROWS / 2, (int)g_nets.size() - ROWS));
+  for (int i = first, y = 22; i < (int)g_nets.size() && i < first + ROWS; ++i, y += 13) {
+    const auto &n = g_nets[i];
+    bool sel = i == g_sel;
+    uint16_t bg = sel ? 0x2124 : BG;
+    if (sel) d.fillRect(0, y - 2, d.width(), 12, bg);
+    String name = n.ssid.length() > 24 ? n.ssid.substring(0, 23) + "~" : n.ssid;
+    d.setTextColor(sel ? ACC : FG, bg); d.setCursor(6, y); d.print(name);
+    char r[16];
+    snprintf(r, sizeof(r), "%s%4d", n.saved ? "saved " : (n.secure ? "" : "open "), n.rssi);
+    d.setTextColor(DIM, bg); d.setCursor(d.width() - 6 - 6 * strlen(r), y); d.print(r);
+  }
+  drawFooter(";/. move  ok join  r rescan  ` back");
+}
+
+void drawWifiPass() {
+  auto &d = M5.Display;
+  drawHeader("join " + g_nets[g_sel].ssid);
+  d.setTextColor(DIM, BG); d.setCursor(6, 30); d.print("password");
+  String shown;
+  if (g_showPass) shown = g_pass;
+  else for (size_t i = 0; i < g_pass.length(); ++i) shown += '*';
+  constexpr size_t COLS = 37;                           // keep the typing end visible
+  if (shown.length() > COLS) shown = shown.substring(shown.length() - COLS);
+  d.drawRect(4, 42, d.width() - 8, 16, DIM);
+  d.setTextColor(FG, BG); d.setCursor(8, 46); d.print(shown + "_");
+  drawFooter("ok: join  tab: show  fn+`: back");
+}
+
+void drawJoining(const String &ssid) {
+  auto &d = M5.Display;
+  drawHeader("join wi-fi");
+  d.setTextColor(FG, BG);  d.setCursor(6, 40); d.print("joining " + ssid + "...");
+  d.setTextColor(DIM, BG); d.setCursor(6, 56); d.print("this can take a few seconds");
 }
 
 void drawDrive() {
@@ -163,6 +227,8 @@ void drawCurrent() {
     case INFO:     drawInfo();    break;
     case WIFI_QR:  drawWifiQR();  break;
     case LOGIN_QR: drawLoginQR(); break;
+    case WIFI_PICK: drawWifiPick(); break;
+    case WIFI_PASS: drawWifiPass(); break;
   }
 }
 
@@ -173,6 +239,68 @@ bool wake() {
   M5.Display.setBrightness(90);
   g_dimmed = false;
   return true;
+}
+
+void leaveWifi() {
+  g_pass = "";
+  g_showPass = false;
+  g_screen = INFO;
+}
+
+void openWifiPick() {
+  auto &d = M5.Display;
+  drawHeader("join wi-fi");
+  d.setTextColor(FG, BG); d.setCursor(6, 40); d.print("scanning...");
+  String err;
+  if (!net::scan(g_nets, err)) { leaveWifi(); drawCurrent(); ui::toast(err.c_str()); return; }
+  g_sel = 0;
+  g_screen = WIFI_PICK;
+  drawCurrent();
+}
+
+void joinSelected() {
+  String ssid = g_nets[g_sel].ssid, err;
+  drawJoining(ssid);
+  bool ok = net::join(ssid, g_pass, err);   // blocking; saves the network on success
+  leaveWifi();
+  drawCurrent();
+  ui::toast(ok ? ("joined " + ssid).c_str() : err.c_str());
+}
+
+// A key went down. Plain ; . ` work as arrows/back in the list; in the
+// password field every printable key is text, so only fn+` goes back.
+void onKey(const Keyboard_Class::KeysState &k) {
+  char c = k.word.empty() ? 0 : k.word.back();
+  int n = (int)g_nets.size();
+  switch (g_screen) {
+    case INFO:
+      if (c == 'w' || c == 'W') openWifiPick();
+      break;
+    case WIFI_PICK:
+      if (k.esc || c == '`' || k.backspace) { leaveWifi(); drawCurrent(); }
+      else if (c == 'r' || c == 'R') openWifiPick();
+      else if (n && (k.up || c == ';'))   { g_sel = (g_sel + n - 1) % n; drawCurrent(); }
+      else if (n && (k.down || c == '.')) { g_sel = (g_sel + 1) % n; drawCurrent(); }
+      else if (n && k.enter) {
+        g_pass = "";
+        if (g_nets[g_sel].secure) { g_screen = WIFI_PASS; drawCurrent(); }
+        else joinSelected();
+      }
+      break;
+    case WIFI_PASS:
+      if (k.esc) { g_pass = ""; g_showPass = false; g_screen = WIFI_PICK; drawCurrent(); }
+      else if (k.enter) joinSelected();
+      else if (k.tab) { g_showPass = !g_showPass; drawCurrent(); }
+      else if (k.backspace) { if (g_pass.length()) g_pass.remove(g_pass.length() - 1); drawCurrent(); }
+      else if (!k.fn && !k.ctrl && !k.alt && !k.opt && !k.word.empty()) {
+        for (char ch : k.word)
+          if (ch >= 32 && ch < 127 && g_pass.length() < 63) g_pass += ch;   // WPA2 keys: 8-63 chars
+        drawCurrent();
+      }
+      break;
+    default:
+      break;
+  }
 }
 
 }  // namespace
@@ -208,13 +336,34 @@ void toast(const char *line) {
 }
 
 void tick() {
-  M5.update();
+  M5Cardputer.update();
+
+  // Act on key-downs only, and only on characters not already held: with the
+  // usual isChange() pattern, releasing one of two rolled-over keys would
+  // "type" the other again.
+  static size_t prevHeld = 0;
+  static std::vector<char> prevWord;
+  auto &kb = M5Cardputer.Keyboard;
+  if (kb.isChange()) {
+    const auto &ks = kb.keysState();
+    size_t held = kb.isPressed();
+    if (held > prevHeld && !wake() && !g_driveShown) {
+      Keyboard_Class::KeysState k = ks;
+      k.word.clear();
+      for (char ch : ks.word)
+        if (std::find(prevWord.begin(), prevWord.end(), ch) == prevWord.end()) k.word.push_back(ch);
+      onKey(k);
+    }
+    prevHeld = held;
+    prevWord = ks.word;
+  }
 
   if (M5.BtnA.wasPressed() && !wake()) {
     switch (g_screen) {
       case INFO:     g_screen = net::apUp() ? WIFI_QR : (WUI_QR_LOGIN ? LOGIN_QR : INFO); g_viaAp = false; break;
       case WIFI_QR:  g_screen = WUI_QR_LOGIN ? LOGIN_QR : INFO; g_viaAp = true; break;
       case LOGIN_QR: g_screen = INFO; break;
+      default:       leaveWifi(); break;
     }
     draw();
     g_next = millis() + 2000;
@@ -235,7 +384,7 @@ void tick() {
 
   uint32_t idle = millis() - g_lastInput;
   if (usb::driveMode() != g_driveShown) { wake(); draw(); }
-  if (g_screen != INFO && idle > 5 * 60000UL) { g_screen = INFO; draw(); }   // don't leave a QR up
+  if (g_screen != INFO && idle > 5 * 60000UL) { leaveWifi(); draw(); }   // no QR or half-typed key left up
   if (!g_dimmed && g_screen == INFO && idle > WUI_DIM_AFTER_MS) { M5.Display.setBrightness(12); g_dimmed = true; }
 
   if (g_toastUntil && millis() > g_toastUntil) { g_toastUntil = 0; draw(); }
@@ -251,6 +400,7 @@ void tick() {
     }
     return;
   }
+  if (g_screen == WIFI_PICK || g_screen == WIFI_PASS) return;   // redrawn on key presses
   if (g_screen == WIFI_QR) {                 // static unless the AP went away
     if (!net::apUp()) { g_screen = INFO; draw(); }
     return;

@@ -35,7 +35,10 @@ void   setKeepAp(bool on);
 bool join(const String &ssid, const String &password, String &err);
 std::vector<String> savedNetworks();
 bool forget(const String &ssid);
-// Blocking scan (a few seconds): [{"ssid":..,"rssi":..,"secure":..,"saved":..}]
+// Blocking scan (a few seconds), one entry per SSID, strongest first.
+struct ScanResult { String ssid; int rssi; bool secure; bool saved; };
+bool scan(std::vector<ScanResult> &out, String &err);
+// The same as JSON: [{"ssid":..,"rssi":..,"secure":..,"saved":..}]
 bool scanJson(String &out, String &err);
 
 // Clock: from the browser (epoch seconds, JS getTimezoneOffset() minutes) or NTP.

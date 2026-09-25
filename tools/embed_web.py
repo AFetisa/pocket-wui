@@ -24,8 +24,8 @@ def build():
         lines.append("  " + ",".join("0x%02x" % b for b in gz[i:i + 16]) + ",")
     lines += ["};", ""]
     new = "\n".join(lines)
-    if not os.path.exists(OUT) or open(OUT).read() != new:
-        open(OUT, "w").write(new)
+    if not os.path.exists(OUT) or open(OUT, encoding="utf-8").read() != new:
+        open(OUT, "w", encoding="utf-8").write(new)
         print("embed_web: %s -> %s (%d B gzipped)" % (os.path.basename(SRC), os.path.basename(OUT), len(gz)))
 
 
