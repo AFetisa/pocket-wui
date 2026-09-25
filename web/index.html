@@ -1,125 +1,183 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Cardputer WUI</title>
+<meta name="color-scheme" content="light dark">
+<title>PocketWUI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='5' width='26' height='22' rx='5' fill='%2316a34a'/%3E%3Crect x='8' y='10' width='16' height='8' rx='2' fill='%23fff'/%3E%3C/svg%3E">
 <style>
 :root{
-  --bg:#0b0f0d; --bg-2:#0f1512; --bg-3:#141c18; --line:#1e2a24;
-  --fg:#c8e6d5; --fg-dim:#6f8c7d; --accent:#4ade80; --accent-dim:#1d6b3f;
-  --warn:#fbbf24; --err:#f87171; --blue:#60a5fa;
-  --mono:"SFMono-Regular",Menlo,Consolas,"DejaVu Sans Mono",monospace;
-  --r:6px;
+  --bg:#f5f6f4;--panel:#fff;--panel2:#f0f2ef;--line:#e2e6e1;--fg:#18201c;--dim:#667069;
+  --accent:#15803d;--accent-fg:#fff;--accent-soft:#dcfce7;--danger:#dc2626;--warn:#b45309;--blue:#2563eb;
+  --shadow:0 1px 2px #0000000d,0 8px 28px #00000012;--r:12px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
+:root[data-theme=dark]{
+  --bg:#0d1210;--panel:#141a17;--panel2:#1a221e;--line:#25302a;--fg:#e0e8e3;--dim:#8b988f;
+  --accent:#22c55e;--accent-fg:#052e14;--accent-soft:#12321f;--danger:#f87171;--warn:#fbbf24;--blue:#60a5fa;
+  --shadow:0 1px 2px #0006,0 10px 30px #0008;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#0d1210;--panel:#141a17;--panel2:#1a221e;--line:#25302a;--fg:#e0e8e3;--dim:#8b988f;
+  --accent:#22c55e;--accent-fg:#052e14;--accent-soft:#12321f;--danger:#f87171;--warn:#fbbf24;--blue:#60a5fa;
+  --shadow:0 1px 2px #0006,0 10px 30px #0008;}}
 *{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.5 var(--mono);
- -webkit-font-smoothing:antialiased;overflow:hidden}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);overflow:hidden;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
-::-webkit-scrollbar{width:9px;height:9px}
-::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
-::-webkit-scrollbar-track{background:transparent}
+a{color:var(--blue)}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:9px;
+ padding:7px 12px;cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,.ibtn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+.btn.danger{color:var(--danger)}
+.btn.danger:hover{border-color:var(--danger)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.ibtn{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:9px;border:0;background:none;cursor:pointer;color:var(--dim)}
+.ibtn:hover{background:var(--panel2);color:var(--fg)}
+input[type=text],input[type=password],input[type=search],textarea,select{width:100%;background:var(--panel);border:1px solid var(--line);
+ border-radius:9px;padding:9px 11px;outline:none}
+input:focus,textarea:focus{border-color:var(--accent)}
+.muted{color:var(--dim)}
+.small{font-size:12.5px}
+.row{display:flex;align-items:center;gap:8px}
+.grow{flex:1;min-width:0}
+.hidden{display:none!important}
 
-/* ---------- login ---------- */
-#login{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg);z-index:50}
-.card{width:min(380px,92vw);border:1px solid var(--line);background:var(--bg-2);border-radius:var(--r);padding:22px}
-.brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:.06em}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)}
-.sub{color:var(--fg-dim);font-size:11.5px;margin:6px 0 18px}
+/* sign-in */
+#login{position:fixed;inset:0;display:grid;place-items:center;padding:16px;z-index:60;background:var(--bg)}
+.card{width:min(390px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:.01em}
+.logo{width:30px;height:30px;border-radius:9px;background:var(--accent);display:grid;place-items:center;color:var(--accent-fg)}
+.logo svg{width:18px;height:18px}
+#login p{margin:10px 0 18px;color:var(--dim)}
 .field{display:block;margin-bottom:12px}
-.field span{display:block;color:var(--fg-dim);font-size:11px;margin-bottom:5px;letter-spacing:.08em;text-transform:uppercase}
-input[type=text],input[type=password],textarea{width:100%;background:var(--bg-3);border:1px solid var(--line);
- border-radius:var(--r);padding:9px 10px;outline:none}
-input:focus,textarea:focus{border-color:var(--accent-dim)}
-.btn{background:var(--bg-3);border:1px solid var(--line);border-radius:var(--r);padding:7px 12px;cursor:pointer;
- white-space:nowrap;transition:.12s}
-.btn:hover{border-color:var(--accent-dim);color:#e6fff0}
-.btn:active{transform:translateY(1px)}
-.btn.primary{background:var(--accent-dim);border-color:var(--accent-dim);color:#eafff2}
-.btn.primary:hover{background:#26824d}
-.btn.danger:hover{border-color:var(--err);color:var(--err)}
-.btn[disabled]{opacity:.45;cursor:not-allowed}
-.msg{min-height:18px;font-size:11.5px;color:var(--err);margin-top:10px}
+.field>span{display:block;font-size:12.5px;color:var(--dim);margin-bottom:5px}
+.msg{min-height:20px;margin-top:10px;font-size:13px;color:var(--danger)}
 
-/* ---------- shell ---------- */
-#app{display:none;height:100%;flex-direction:column}
-header{display:flex;align-items:center;gap:12px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg-2)}
-header .stats{margin-left:auto;display:flex;gap:14px;color:var(--fg-dim);font-size:11px;align-items:center}
-header .stats b{color:var(--fg);font-weight:500}
-main{flex:1;display:flex;min-height:0}
-#pane{flex:1;display:flex;flex-direction:column;min-width:0}
-.bar{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.crumbs{display:flex;align-items:center;gap:3px;flex:1;min-width:120px;overflow:auto;white-space:nowrap}
-.crumbs a{color:var(--accent);text-decoration:none;cursor:pointer;padding:2px 3px;border-radius:3px}
-.crumbs a:hover{background:var(--bg-3)}
-.crumbs i{color:var(--fg-dim);font-style:normal}
-
-#list{flex:1;overflow:auto}
+/* shell */
+#app{height:100%;display:none;flex-direction:column}
+header.top{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.chips{display:flex;gap:6px;margin-left:auto;align-items:center;flex-wrap:nowrap;overflow:hidden}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:99px;background:var(--panel2);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.chip b{color:var(--fg);font-weight:600}
+.meter{width:46px;height:6px;border-radius:9px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent)}
+.bar{display:flex;align-items:center;gap:8px;padding:10px 14px;flex-wrap:wrap}
+.crumbs{display:flex;align-items:center;gap:2px;flex:1;min-width:140px;overflow-x:auto;white-space:nowrap;font-weight:600}
+.crumbs a{color:var(--fg);text-decoration:none;padding:4px 7px;border-radius:7px;cursor:pointer}
+.crumbs a:hover{background:var(--panel2)}
+.crumbs span{color:var(--dim)}
+.search{position:relative;width:min(300px,100%)}
+.search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--dim)}
+.search input{padding-left:34px}
+#selbar{display:flex;align-items:center;gap:8px;margin:0 14px 8px;padding:8px 10px;border-radius:var(--r);background:var(--accent-soft);flex-wrap:wrap}
+#banner{margin:0 14px 10px;padding:12px 14px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line)}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+#list{flex:1;overflow:auto;margin:0 14px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
 table{width:100%;border-collapse:collapse}
-th{position:sticky;top:0;background:var(--bg-2);text-align:left;font-weight:500;color:var(--fg-dim);
- font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 12px;border-bottom:1px solid var(--line);z-index:2}
-td{padding:6px 12px;border-bottom:1px solid #131a16;vertical-align:middle}
-tbody tr:hover{background:var(--bg-2)}
-.name{display:flex;align-items:center;gap:8px;cursor:pointer}
-.name:hover{color:#eafff2}
-.ico{color:var(--fg-dim);width:14px;display:inline-block;text-align:center}
-.ico.dir{color:var(--blue)}
-td.size,td.when{color:var(--fg-dim);font-size:11.5px;white-space:nowrap}
-td.acts{text-align:right;white-space:nowrap;opacity:0;transition:.12s}
-tr:hover td.acts{opacity:1}
-td.acts button{background:none;border:none;color:var(--fg-dim);cursor:pointer;padding:2px 5px;border-radius:3px}
-td.acts button:hover{color:var(--accent);background:var(--bg-3)}
-.empty{padding:26px 12px;color:var(--fg-dim);text-align:center}
-
-/* ---------- console ---------- */
-#console{height:216px;border-top:1px solid var(--line);background:#080b09;display:flex;flex-direction:column}
-#console.hidden{display:none}
-#grip{height:5px;cursor:ns-resize;background:transparent}
-#grip:hover{background:var(--accent-dim)}
-#out{flex:1;overflow:auto;padding:8px 12px;white-space:pre-wrap;word-break:break-word;font-size:12px}
-#out .cmd{color:var(--accent)}
-#out .err{color:var(--err)}
-#out .dim{color:var(--fg-dim)}
-#cl{display:flex;align-items:center;gap:8px;padding:6px 12px;border-top:1px solid var(--line)}
-#cl span{color:var(--accent)}
-#cmd{flex:1;background:none;border:none;outline:none;padding:0}
-
-/* ---------- uploads ---------- */
-#jobs{position:fixed;right:14px;bottom:14px;width:min(330px,88vw);display:flex;flex-direction:column;gap:8px;z-index:30}
-.job{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r);padding:9px 11px;font-size:11.5px;
- box-shadow:0 8px 24px #0008}
-.job .row{display:flex;gap:8px;align-items:center}
-.job .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.job .pc{color:var(--fg-dim)}
-.job .track{height:3px;background:var(--bg-3);border-radius:2px;margin-top:7px;overflow:hidden}
-.job .fill{height:100%;background:var(--accent);width:0;transition:width .2s}
-.job.done .fill{background:var(--accent)}
-.job.fail .fill{background:var(--err)}
-.job button{background:none;border:none;color:var(--fg-dim);cursor:pointer}
-
-/* ---------- modal / drop ---------- */
-/* pointer-events:none — the overlay is a hint, not a lid: a file dropped on a
-   folder row has to reach the row underneath it. */
-#drop{position:fixed;inset:0;background:#0b0f0dcc;border:2px dashed var(--accent);z-index:40;
- display:none;place-items:center;color:var(--accent);letter-spacing:.1em;pointer-events:none}
-#drop.on{display:grid}
-tr[draggable]{cursor:grab}
+th{position:sticky;top:0;z-index:2;background:var(--panel);text-align:left;font-weight:600;font-size:12.5px;color:var(--dim);
+ padding:9px 10px;border-bottom:1px solid var(--line);user-select:none}
+th.sort{cursor:pointer}
+th.sort:hover{color:var(--fg)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--panel2)}
+tr.sel{background:var(--accent-soft)!important}
+td.ck,th.ck{width:34px;padding-right:0}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.nm{display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0}
+.nm .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nm .sub{display:none;font-size:12px;color:var(--dim)}
+.ftype{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none;background:var(--t-bg,var(--panel2));color:var(--t-fg,var(--dim))}
+.ftype.dir{--t-bg:#dbeafe;--t-fg:#1d4ed8}.ftype.img{--t-bg:#fce7f3;--t-fg:#be185d}.ftype.vid{--t-bg:#ede9fe;--t-fg:#6d28d9}
+.ftype.aud{--t-bg:#ffedd5;--t-fg:#c2410c}.ftype.txt{--t-bg:#e0f2fe;--t-fg:#0369a1}.ftype.zip{--t-bg:#fef9c3;--t-fg:#a16207}.ftype.bin{--t-bg:#dcfce7;--t-fg:#15803d}
+:root[data-theme=dark] .ftype.dir{--t-bg:#172a4a;--t-fg:#93c5fd}:root[data-theme=dark] .ftype.img{--t-bg:#3f1630;--t-fg:#f9a8d4}
+:root[data-theme=dark] .ftype.vid{--t-bg:#2a1d52;--t-fg:#c4b5fd}:root[data-theme=dark] .ftype.aud{--t-bg:#3d220f;--t-fg:#fdba74}
+:root[data-theme=dark] .ftype.txt{--t-bg:#0c2c40;--t-fg:#7dd3fc}:root[data-theme=dark] .ftype.zip{--t-bg:#3a300c;--t-fg:#fde047}
+:root[data-theme=dark] .ftype.bin{--t-bg:#10341f;--t-fg:#86efac}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .ftype.dir{--t-bg:#172a4a;--t-fg:#93c5fd}:root:not([data-theme=light]) .ftype.img{--t-bg:#3f1630;--t-fg:#f9a8d4}
+:root:not([data-theme=light]) .ftype.vid{--t-bg:#2a1d52;--t-fg:#c4b5fd}:root:not([data-theme=light]) .ftype.aud{--t-bg:#3d220f;--t-fg:#fdba74}
+:root:not([data-theme=light]) .ftype.txt{--t-bg:#0c2c40;--t-fg:#7dd3fc}:root:not([data-theme=light]) .ftype.zip{--t-bg:#3a300c;--t-fg:#fde047}
+:root:not([data-theme=light]) .ftype.bin{--t-bg:#10341f;--t-fg:#86efac}}
+td.num{color:var(--dim);white-space:nowrap;font-size:13px}
+td.act{width:44px;text-align:right}
+.empty{padding:48px 16px;text-align:center;color:var(--dim)}
+.empty svg{width:40px;height:40px;opacity:.5;margin-bottom:8px}
+tr[draggable]{cursor:default}
 tr.dragging{opacity:.4}
-.into{outline:1px dashed var(--accent);outline-offset:-1px;background:var(--bg-3)!important}
-#modal{position:fixed;inset:0;background:#000000b0;z-index:45;display:none;place-items:center;padding:16px}
+.into{outline:2px dashed var(--accent);outline-offset:-2px}
+
+/* menus, modals, toasts */
+.menu{position:fixed;z-index:70;min-width:190px;background:var(--panel);border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:5px}
+.menu button{display:flex;width:100%;align-items:center;gap:10px;border:0;background:none;padding:8px 10px;border-radius:7px;cursor:pointer;text-align:left}
+.menu button:hover{background:var(--panel2)}
+.menu button.danger{color:var(--danger)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+#modal{position:fixed;inset:0;z-index:50;background:#0008;display:none;place-items:center;padding:14px}
 #modal.on{display:grid}
-.sheet{width:min(860px,96vw);max-height:90vh;display:flex;flex-direction:column;background:var(--bg-2);
- border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.sheet header{background:var(--bg-3)}
-.sheet .body{padding:14px;overflow:auto}
-.sheet .foot{display:flex;gap:8px;justify-content:flex-end;padding:11px 14px;border-top:1px solid var(--line)}
-#edit{width:100%;height:52vh;resize:vertical;background:#080b09;font-size:12.5px;line-height:1.55;white-space:pre;overflow-wrap:normal}
-.hint{color:var(--fg-dim);font-size:11px}
-@media (max-width:620px){
-  td.when{display:none} th.when{display:none}
-  td.acts{opacity:1}
-  header .stats .opt{display:none}
+.sheet{width:min(880px,100%);max-height:92vh;display:flex;flex-direction:column;background:var(--panel);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.sheet.narrow{width:min(520px,100%)}
+.sheet>header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:600}
+.sheet>header .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet .body{padding:16px;overflow:auto}
+.sheet .foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.viewer{display:grid;place-items:center;min-height:200px;background:var(--panel2);border-radius:10px;overflow:hidden;position:relative}
+.viewer img,.viewer video{max-width:100%;max-height:68vh;display:block}
+.viewer iframe{width:100%;height:68vh;border:0;background:#fff}
+.viewer .nav{position:absolute;top:50%;transform:translateY(-50%);background:#000a;color:#fff;border:0;border-radius:50%;width:40px;height:40px;cursor:pointer}
+.viewer .nav.l{left:10px}.viewer .nav.r{right:10px}
+#edit{width:100%;height:58vh;resize:vertical;font:13px/1.55 var(--mono);white-space:pre;overflow-wrap:normal}
+.md{line-height:1.6;max-width:760px}
+.md pre{background:var(--panel2);padding:10px;border-radius:8px;overflow:auto}
+.md code{font-family:var(--mono);font-size:.92em;background:var(--panel2);padding:1px 4px;border-radius:4px}
+.md pre code{background:none;padding:0}
+.md blockquote{margin:0;padding-left:12px;border-left:3px solid var(--line);color:var(--dim)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13.5px}
+.kv dt{color:var(--dim)}.kv dd{margin:0;word-break:break-all}
+.sec{margin-bottom:22px}
+.sec h3{margin:0 0 8px;font-size:15px}
+.sec p{margin:4px 0 10px}
+.list{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.list>div{display:flex;align-items:center;gap:10px;padding:9px 11px;border-bottom:1px solid var(--line)}
+.list>div:last-child{border-bottom:0}
+.tabs{display:flex;gap:4px;padding:8px 14px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:none;padding:8px 11px;border-bottom:2px solid transparent;cursor:pointer;color:var(--dim);white-space:nowrap}
+.tabs button.on{color:var(--fg);border-color:var(--accent);font-weight:600}
+.switch{display:flex;align-items:center;gap:10px;cursor:pointer}
+code.addr{font-family:var(--mono);background:var(--panel2);padding:4px 8px;border-radius:7px;user-select:all}
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--fg);color:var(--bg);padding:9px 14px;border-radius:10px;box-shadow:var(--shadow);max-width:min(560px,92vw);pointer-events:auto}
+.toast.err{background:var(--danger);color:#fff}
+#jobs{position:fixed;right:14px;bottom:14px;width:min(340px,92vw);display:flex;flex-direction:column;gap:8px;z-index:40}
+.job{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow);font-size:13px}
+.job .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.job .track{height:4px;background:var(--line);border-radius:9px;margin-top:8px;overflow:hidden}
+.job .fill{height:100%;width:0;background:var(--accent);transition:width .2s}
+.job.fail .fill{background:var(--danger)}
+#drop{position:fixed;inset:10px;border:3px dashed var(--accent);border-radius:18px;background:#15803d22;z-index:45;display:none;place-items:center;
+ font-size:18px;font-weight:600;color:var(--accent);pointer-events:none}
+#drop.on{display:grid}
+
+/* console */
+#console{height:220px;display:flex;flex-direction:column;border-top:1px solid var(--line);background:#0b0f0d;color:#c8e6d5;font:12.5px/1.5 var(--mono)}
+#out{flex:1;overflow:auto;padding:8px 12px;white-space:pre-wrap;word-break:break-word}
+#out .cmd{color:#4ade80}#out .err{color:#f87171}#out .dim{color:#6f8c7d}
+#cl{display:flex;gap:8px;padding:6px 12px;border-top:1px solid #1e2a24}
+#cl span{color:#4ade80}
+#cmd{flex:1;background:none;border:0;outline:none;padding:0;color:inherit;font:inherit}
+
+@media (max-width:700px){
+  .chip.opt,th.num,td.num{display:none}
+  .nm .sub{display:block}
+  .bar{padding:10px}
+  #list{margin:0 8px 8px}
+  .search{width:100%;order:5}
+  .hide-sm{display:none}
 }
 </style>
 </head>
@@ -127,265 +185,511 @@ tr.dragging{opacity:.4}
 
 <div id="login">
   <form class="card" id="loginForm">
-    <div class="brand"><i class="dot"></i> CARDPUTER · WUI</div>
-    <div class="sub">Locked. Enter the access password shown on the device screen.</div>
-    <label class="field"><span>Password</span>
-      <input type="password" id="pw" autocomplete="current-password" autofocus></label>
-    <button class="btn primary" style="width:100%" id="loginBtn">Unlock</button>
-    <div class="msg" id="loginMsg"></div>
+    <div class="brand"><span class="logo" data-i="card"></span>PocketWUI</div>
+    <p>Your Cardputer's SD card, right here in the browser. Enter the password shown on the Cardputer's screen — or press its side button and scan the QR code to skip this.</p>
+    <label class="field"><span>Password</span><input type="password" id="pw" autocomplete="current-password" autofocus></label>
+    <button class="btn primary" style="width:100%;justify-content:center" id="loginBtn">Unlock</button>
+    <div class="msg" id="loginMsg" role="alert"></div>
   </form>
 </div>
 
 <div id="app">
-  <header>
-    <div class="brand"><i class="dot"></i> CARDPUTER · WUI</div>
-    <div class="stats">
-      <div class="opt">sd <b id="sSd">–</b></div>
-      <div class="opt">heap <b id="sHeap">–</b></div>
-      <div class="opt">ip <b id="sIp">–</b></div>
-      <div>up <b id="sUp">–</b></div>
-      <button class="btn" id="bTerm" title="Toggle console (Ctrl+`)">terminal</button>
-      <button class="btn" id="bOut">lock</button>
+  <header class="top">
+    <div class="brand"><span class="logo" data-i="card"></span><span class="hide-sm">PocketWUI</span></div>
+    <div class="chips">
+      <span class="chip" id="cNet" title="Connection"></span>
+      <span class="chip opt" id="cSd" title="SD card"></span>
+      <span class="chip opt" id="cBat" title="Battery"></span>
     </div>
+    <button class="ibtn" id="bTerm" title="Console (Ctrl+`)" data-i="term"></button>
+    <button class="ibtn" id="bSet" title="Settings" data-i="gear"></button>
+    <button class="ibtn" id="bOut" title="Lock" data-i="lock"></button>
   </header>
 
   <main>
-    <div id="pane">
-      <div class="bar">
-        <div class="crumbs" id="crumbs"></div>
-        <button class="btn" id="bUp">↑ up</button>
-        <button class="btn" id="bNewFile">+ file</button>
-        <button class="btn" id="bNewDir">+ folder</button>
-        <button class="btn primary" id="bUpload">upload</button>
-        <button class="btn" id="bUploadDir" title="Upload a whole folder">upload folder</button>
-        <button class="btn" id="bReload" title="Refresh">⟳</button>
-        <input type="file" id="file" multiple hidden>
-        <input type="file" id="dir" webkitdirectory directory multiple hidden>
-      </div>
-      <div id="list"></div>
+    <div class="bar">
+      <div class="crumbs" id="crumbs"></div>
+      <label class="search"><span data-i="search"></span><input type="search" id="q" placeholder="Search files…" title="Type to filter this folder · Enter searches the whole card" autocomplete="off"></label>
+      <button class="btn primary" id="bUpload"><span data-i="upload"></span>Upload</button>
+      <button class="btn" id="bNew" title="New…"><span data-i="plus"></span><span class="hide-sm">New</span></button>
+      <button class="ibtn" id="bMore" title="More" data-i="more"></button>
+      <input type="file" id="file" multiple hidden>
+      <input type="file" id="dir" webkitdirectory directory multiple hidden>
     </div>
+    <div id="banner" class="hidden"></div>
+    <div id="selbar" class="hidden"></div>
+    <div id="list"></div>
   </main>
 
-  <div id="console">
-    <div id="grip"></div>
+  <div id="console" class="hidden">
     <div id="out"></div>
-    <div id="cl"><span>$</span><input id="cmd" autocomplete="off" spellcheck="false" placeholder="help"></div>
+    <div id="cl"><span>$</span><input id="cmd" autocomplete="off" spellcheck="false" placeholder="type help"></div>
   </div>
 </div>
 
 <div id="jobs"></div>
-<div id="drop">DROP FILES OR FOLDERS TO UPLOAD</div>
+<div id="toasts" aria-live="polite"></div>
+<div id="drop">Drop to upload here</div>
 <div id="modal"><div class="sheet" id="sheet"></div></div>
 
 <script>
 "use strict";
-const $=s=>document.querySelector(s), el=(t,c,x)=>{const n=document.createElement(t);if(c)n.className=c;if(x!=null)n.textContent=x;return n;};
-let CWD="/", STATUS={}, T0=Date.now();
+/* ---------- tiny DOM kit ---------- */
+const $=s=>document.querySelector(s);
+function el(tag,props,...kids){
+  const n=document.createElement(tag);
+  if(typeof props==="string") n.className=props;
+  else if(props) for(const k in props){ const v=props[k];
+    if(k==="class") n.className=v; else if(k.startsWith("on")) n[k]=v;
+    else if(k==="html") n.innerHTML=v; else if(v!==false&&v!=null) n.setAttribute(k,v===true?"":v); }
+  for(const k of kids.flat()) if(k!=null&&k!==false) n.append(k.nodeType?k:document.createTextNode(k));
+  return n;
+}
+const P={ /* 24px stroke icons */
+  card:"M4 6h16v12H4zM8 10h8v4H8z", folder:"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+  file:"M6 3h8l4 4v14H6zM14 3v4h4", img:"M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9h.01", vid:"M4 6h11v12H4zM15 10l5-3v10l-5-3",
+  aud:"M9 18V6l10-2v12M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zm10-2a3 3 0 1 1-3-3 3 3 0 0 1 3 3z", txt:"M6 3h8l4 4v14H6zM9 12h6M9 16h6M9 8h2",
+  zip:"M6 3h12v18H6zM11 3v2h2v2h-2v2h2v2h-2v2", bin:"M7 7h10v10H7zM9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4",
+  search:"M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14zM21 21l-5-5", upload:"M12 16V4M7 9l5-5 5 5M4 20h16", plus:"M12 5v14M5 12h14",
+  more:"M5 12h.01M12 12h.01M19 12h.01", gear:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z",
+  term:"M4 17l6-6-6-6M12 19h8", lock:"M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4", dl:"M12 4v12M7 11l5 5 5-5M4 20h16",
+  trash:"M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3", edit:"M4 20h4L19 9l-4-4L4 16zM13 7l4 4", copy:"M9 9h11v11H9zM5 15V4h11",
+  move:"M5 12h14M13 6l6 6-6 6", info:"M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 11v5M12 8h.01", x:"M6 6l12 12M18 6L6 18",
+  up:"M12 19V5M5 12l7-7 7 7", wifi:"M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0M2 8.5a15 15 0 0 1 20 0M12 19h.01",
+  usb:"M12 3v14M12 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM12 13l-4-3V7M12 11l4-2V6M7 7h2M15 6h2", sd:"M7 3h7l4 4v14H7zM10 7v3M13 7v3",
+  bat:"M3 8h15v8H3zM21 11v2", eye:"M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  refresh:"M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7", check:"M5 12l5 5L20 7", hash:"M5 9h14M5 15h14M10 4L8 20M16 4l-2 16",
+};
+function icon(n){ const s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("viewBox","0 0 24 24");
+  s.setAttribute("class","i"); const p=document.createElementNS("http://www.w3.org/2000/svg","path"); p.setAttribute("d",P[n]||P.file); s.append(p); return s; }
+document.querySelectorAll("[data-i]").forEach(n=>n.prepend(icon(n.dataset.i)));
+
+/* ---------- state ---------- */
+let CWD="/", ENTRIES=[], STATUS={}, SEL=new Set(), FILTER="", RESULTS=null;
+const store={ get(k,d){ try{ const v=localStorage.getItem("pw."+k); return v==null?d:JSON.parse(v); }catch(e){ return d; } },
+              set(k,v){ try{ localStorage.setItem("pw."+k,JSON.stringify(v)); }catch(e){} } };
+let SORT=store.get("sort",{k:"name",d:1}), HIDDEN=store.get("hidden",false);
+function applyTheme(){ const t=store.get("theme","auto"); if(t==="auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme=t; }
+applyTheme();
 
 /* ---------- transport ---------- */
 async function api(path, opts={}){
-  const r = await fetch(path, Object.assign({credentials:"same-origin"}, opts));
-  if(r.status===401){ showLogin(); throw new Error("unauthorized"); }
+  const r=await fetch(path, Object.assign({credentials:"same-origin"}, opts));
+  if(r.status===401){ showLogin(); throw new Error("please sign in again"); }
   return r;
 }
-async function jget(path){ const r=await api(path); const t=await r.text();
-  let j; try{ j=JSON.parse(t); }catch(e){ throw new Error(t.slice(0,160)||("http "+r.status)); }
-  if(!r.ok||j.error) throw new Error(j.error||("http "+r.status)); return j; }
-async function jpost(path, body){ const r=await api(path,{method:"POST",body:body??""});
-  const t=await r.text(); let j; try{ j=JSON.parse(t); }catch(e){ throw new Error(t.slice(0,160)||("http "+r.status)); }
-  if(!r.ok||j.error) throw new Error(j.error||("http "+r.status)); return j; }
+async function parse(r){ const t=await r.text(); let j;
+  try{ j=JSON.parse(t); }catch(e){ throw new Error(t.slice(0,160)||("error "+r.status)); }
+  if(!r.ok||j.error) throw new Error(j.error||("error "+r.status)); return j; }
+const jget=p=>api(p).then(parse);
+const jpost=(p,body)=>api(p,{method:"POST",body:body==null?"":(typeof body==="string"?body:JSON.stringify(body))}).then(parse);
 
 /* ---------- helpers ---------- */
 const enc=encodeURIComponent;
 function join(dir,name){ return (dir.endsWith("/")?dir:dir+"/")+name; }
 function parent(p){ if(p==="/")return "/"; const i=p.lastIndexOf("/"); return i<=0?"/":p.slice(0,i); }
-function human(b){ if(b==null)return "–"; const u=["B","K","M","G","T"]; let i=0,v=b;
-  while(v>=1024&&i<u.length-1){v/=1024;i++;} return (i?v.toFixed(v<10?1:0):v)+u[i]; }
-function when(ts){ if(!ts)return ""; const d=new Date(ts*1000);
-  return d.toISOString().slice(0,16).replace("T"," "); }
-function isText(n){ return /\.(txt|md|json|ya?ml|cfg|conf|ini|log|csv|tsv|c|h|cpp|hpp|py|js|ts|css|html?|sh|bat|xml|toml|env|gcode|nfo)$/i.test(n)||!n.includes("."); }
+function base(p){ return p.split("/").pop()||"/"; }
+function human(b){ if(b==null)return "–"; const u=["B","KB","MB","GB","TB"]; let i=0,v=b;
+  while(v>=1024&&i<u.length-1){v/=1024;i++;} return (i?v.toFixed(v<10?1:0):v)+" "+u[i]; }
+function when(ts){ if(!ts)return ""; const d=new Date(ts*1000), now=new Date();
+  const o=d.getFullYear()===now.getFullYear()?{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}:{year:"numeric",month:"short",day:"numeric"};
+  return d.toLocaleString([],o); }
+const EXT=(n=>{const i=n.lastIndexOf(".");return i>0?n.slice(i+1).toLowerCase():"";});
+const KINDS={img:"jpg jpeg png gif webp bmp svg ico avif",vid:"mp4 m4v webm mov ogv",aud:"mp3 wav ogg oga opus flac m4a aac",
+  txt:"txt md markdown log csv tsv json xml html htm css js ini cfg conf yaml yml toml c h cpp hpp py sh bat gcode nfo env",zip:"zip 7z rar gz tgz tar",bin:"bin",pdf:"pdf"};
+function kind(n,dir){ if(dir)return "dir"; const e=EXT(n); for(const k in KINDS) if((" "+KINDS[k]+" ").includes(" "+e+" ")) return k; return n.includes(".")?"file":"txt"; }
+const KIND_ICON={dir:"folder",img:"img",vid:"vid",aud:"aud",txt:"txt",zip:"zip",bin:"bin",pdf:"file",file:"file"};
+function dlUrl(p,inline){ return "/api/download?path="+enc(p)+(inline?"&inline=1":""); }
+function download(url,name){ const a=el("a",{href:url,download:name||""}); document.body.append(a); a.click(); a.remove(); }
 
-/* ---------- login ---------- */
+function toast(msg,err){ const t=el("div","toast"+(err?" err":""),msg); $("#toasts").append(t); setTimeout(()=>t.remove(),err?6000:3200); if(err) log(msg,"err"); }
+async function guard(fn){ try{ return await fn(); }catch(e){ toast(e.message,true); } }
+
+/* ---------- menus & modals ---------- */
+let openMenu=null;
+function menu(anchor,items){
+  closeMenu(); const m=el("div","menu");
+  for(const it of items){ if(!it){ m.append(el("hr")); continue; }
+    m.append(el("button",{class:it.danger?"danger":"",onclick:()=>{ closeMenu(); it.fn(); }},icon(it.i),it.t)); }
+  document.body.append(m); const r=anchor.getBoundingClientRect(), w=m.offsetWidth, h=m.offsetHeight;
+  m.style.left=Math.max(8,Math.min(innerWidth-w-8,r.right-w))+"px";
+  m.style.top=(r.bottom+h+8>innerHeight?Math.max(8,r.top-h-4):r.bottom+4)+"px"; openMenu=m;
+}
+function closeMenu(){ if(openMenu){ openMenu.remove(); openMenu=null; } }
+addEventListener("mousedown",e=>{ if(openMenu&&!openMenu.contains(e.target)) closeMenu(); });
+
+let onModalClose=null;
+function modal(title,body,foot,cls){
+  const sh=$("#sheet"); sh.className="sheet"+(cls?" "+cls:""); sh.innerHTML="";
+  sh.append(el("header",null,el("div","t",title),el("button",{class:"ibtn",title:"Close",onclick:closeModal},icon("x"))));
+  const b=el("div","body"); if(body) b.append(body); sh.append(b);
+  if(foot&&foot.length) sh.append(el("div","foot",foot));
+  $("#modal").classList.add("on"); return b;
+}
+function closeModal(){ $("#modal").classList.remove("on"); $("#sheet").innerHTML=""; if(onModalClose){ const f=onModalClose; onModalClose=null; f(); } }
+$("#modal").addEventListener("mousedown",e=>{ if(e.target.id==="modal") closeModal(); });
+function ask(title,label,value,okText){ return new Promise(res=>{
+  const inp=el("input",{type:"text",value:value||""}); let done=false;
+  const ok=()=>{ done=true; const v=inp.value.trim(); closeModal(); res(v||null); };
+  inp.addEventListener("keydown",e=>{ if(e.key==="Enter") ok(); });
+  onModalClose=()=>{ if(!done) res(null); };
+  modal(title,el("label","field",el("span",null,label),inp),[el("button",{class:"btn",onclick:closeModal},"Cancel"),el("button",{class:"btn primary",onclick:ok},okText||"OK")],"narrow");
+  setTimeout(()=>{ inp.focus(); const d=inp.value.lastIndexOf("."); inp.setSelectionRange(0,d>0?d:inp.value.length); },30);
+}); }
+function confirmBox(title,text,okText,danger){ return new Promise(res=>{ let done=false;
+  onModalClose=()=>{ if(!done) res(false); };
+  modal(title,el("p",null,text),[el("button",{class:"btn",onclick:closeModal},"Cancel"),
+    el("button",{class:"btn "+(danger?"danger":"primary"),onclick:()=>{ done=true; closeModal(); res(true); }},okText||"OK")],"narrow");
+}); }
+
+/* ---------- sign-in ---------- */
 function showLogin(){ $("#app").style.display="none"; $("#login").style.display="grid"; setTimeout(()=>$("#pw").focus(),40); }
 function showApp(){ $("#login").style.display="none"; $("#app").style.display="flex"; }
-$("#loginForm").addEventListener("submit", async e=>{
+$("#loginForm").addEventListener("submit",async e=>{
   e.preventDefault(); const b=$("#loginBtn"); b.disabled=true; $("#loginMsg").textContent="";
-  try{
-    const r=await fetch("/api/login",{method:"POST",credentials:"same-origin",
-      headers:{"Content-Type":"application/json"},body:JSON.stringify({password:$("#pw").value})});
-    const j=await r.json().catch(()=>({error:"bad response"}));
-    if(!r.ok||j.error) throw new Error(j.error||"login failed");
-    $("#pw").value=""; showApp(); boot();
-  }catch(err){ $("#loginMsg").textContent=err.message; }
-  finally{ b.disabled=false; }
+  try{ const r=await fetch("/api/login",{method:"POST",credentials:"same-origin",body:JSON.stringify({password:$("#pw").value})});
+    await parse(r); $("#pw").value=""; showApp(); boot(); }
+  catch(err){ $("#loginMsg").textContent=err.message; } finally{ b.disabled=false; }
 });
-$("#bOut").addEventListener("click", async()=>{ try{ await jpost("/api/logout"); }catch(e){} showLogin(); });
+$("#bOut").onclick=async()=>{ try{ await jpost("/api/logout"); }catch(e){} showLogin(); };
 
 /* ---------- status ---------- */
 async function refreshStatus(){
-  try{
-    STATUS=await jget("/api/status");
-    $("#sSd").textContent = STATUS.sd_total? human(STATUS.sd_used)+" / "+human(STATUS.sd_total) : "none";
-    $("#sHeap").textContent = human(STATUS.heap);
-    $("#sIp").textContent = STATUS.ip||"–";
-    const s=Math.floor((STATUS.uptime||0)); const h=Math.floor(s/3600), m=Math.floor(s%3600/60);
-    $("#sUp").textContent = h? h+"h"+String(m).padStart(2,"0") : m+"m";
-  }catch(e){}
+  try{ STATUS=await jget("/api/status"); }catch(e){ return; }
+  const S=STATUS, n=$("#cNet"); n.innerHTML="";
+  if(S.usb&&S.usb.host&&location.hostname===S.usb.ip) n.append(icon("usb"),el("b",null,"USB cable"));
+  else n.append(icon("wifi"),el("b",null,S.ap?"Hotspot "+S.ap_ssid:S.ssid));
+  const sd=$("#cSd"); sd.innerHTML="";
+  if(S.sd_lent) sd.append(icon("usb"),"lent to computer");
+  else if(S.sd_total){ const m=el("span","meter",el("i")); m.firstChild.style.width=Math.round(S.sd_used/S.sd_total*100)+"%";
+    sd.append(icon("sd"),m,el("b",null,human(S.sd_total-S.sd_used)),"free"); }
+  else sd.append(icon("sd"),"no card");
+  const bt=$("#cBat"); bt.innerHTML=""; bt.classList.toggle("hidden",!(S.bat>=0));
+  if(S.bat>=0) bt.append(icon("bat"),el("b",null,S.bat+"%"),S.charging?"charging":"");
+  banner();
+}
+function banner(){
+  const b=$("#banner"); b.innerHTML="";
+  if(STATUS.sd_lent){ b.append(el("div","row",icon("usb"),el("div","grow",el("b",null,"Your SD card is on your computer right now. "),
+    "It shows up there as a USB drive. Eject it on the computer to use it here again."),
+    el("button",{class:"btn",onclick:()=>usbDrive(false)},"Take it back")));
+  } else if(STATUS.sd===false){ b.append(el("div","row",icon("sd"),el("div","grow",el("b",null,"No SD card found. "),"Insert a card, then refresh.")));
+  } else if(CWD===WUI_TRASH&&!RESULTS){
+    b.append(el("div","row",icon("trash"),el("div","grow","Deleted items wait here, so you can change your mind. Move them anywhere to restore them."),
+      el("button",{class:"btn danger",onclick:async()=>{ if(await confirmBox("Empty the Trash?","Everything in the Trash is deleted for good.","Empty Trash",true))
+        await guard(async()=>{ await jpost("/api/trash/empty"); toast("Trash emptied"); go("/"); }); }},"Empty Trash")));
+  }
+  b.classList.toggle("hidden",!b.childNodes.length);
 }
 
 /* ---------- listing ---------- */
 let renderSeq=0;
-async function go(path){ CWD=path||"/"; await render(); }
-async function render(){
+async function go(path){ CWD=path||"/"; SEL.clear(); RESULTS=null; FILTER=""; $("#q").value=""; await render(); }
+function crumbs(){
   const cb=$("#crumbs"); cb.innerHTML="";
-  const root=el("a",null,"sd:"); root.onclick=()=>go("/"); dropTarget(root,"/"); cb.append(root);
-  let acc=""; for(const part of CWD.split("/").filter(Boolean)){
-    acc=join(acc||"/",part); const p=acc;
-    cb.append(el("i",null,"/")); const a=el("a",null,part); a.onclick=()=>go(p); dropTarget(a,p); cb.append(a);
+  const home=el("a",{title:"SD card"},icon("sd")," SD card"); home.onclick=()=>go("/"); dropTarget(home,"/"); cb.append(home);
+  let acc="/"; for(const part of CWD.split("/").filter(Boolean)){
+    acc=join(acc,part); const p=acc; cb.append(el("span",null,"/"));
+    const a=el("a",null,p===WUI_TRASH?"Trash":part); a.onclick=()=>go(p); dropTarget(a,p); cb.append(a);
   }
-  // Renders overlap (an upload re-renders after every file): only the newest
-  // may touch the list, and it clears only once its data is in hand —
-  // otherwise two in flight both clear, then both append, and every row doubles.
-  const box=$("#list"), mine=++renderSeq;
-  let d, err;
-  try{ d=await jget("/api/list?path="+enc(CWD)); }catch(e){ err=e; }
+  if(RESULTS) cb.append(el("span",null," · "),el("a",null,"results for “"+RESULTS.q+"”"));
+}
+const WUI_TRASH="/.trash";
+async function render(){
+  crumbs();
+  const mine=++renderSeq; let d,err;
+  if(STATUS.sd_lent){ banner(); list([],"The SD card is lent to your computer"); return; }
+  if(!RESULTS){ try{ d=await jget("/api/list?path="+enc(CWD)); }catch(e){ err=e; } }
   if(mine!==renderSeq) return;
-  box.innerHTML="";
-  if(err){ box.append(el("div","empty","cannot read "+CWD+" — "+err.message)); return; }
-  if(!d.entries.length){ box.append(el("div","empty","empty directory — drop files here to upload")); }
-  else{
-    const t=el("table");
-    t.innerHTML='<thead><tr><th>name</th><th class="size">size</th><th class="when">modified</th><th></th></tr></thead>';
-    const tb=el("tbody");
-    d.entries.sort((a,b)=> (b.dir-a.dir) || a.name.localeCompare(b.name));
-    for(const e of d.entries){
-      const tr=el("tr"), full=join(CWD,e.name);
-      dragSource(tr,full);
-      if(e.dir) dropTarget(tr,full);
-      const td=el("td"); const nm=el("div","name");
-      nm.append(el("span","ico"+(e.dir?" dir":""), e.dir?"▸":"·"), el("span",null,e.name));
-      nm.onclick=()=> e.dir? go(full) : (isText(e.name)? openEditor(full) : download(full));
-      td.append(nm); tr.append(td);
-      tr.append(el("td","size", e.dir?"":human(e.size)));
-      tr.append(el("td","when", when(e.mtime)));
-      const a=el("td","acts");
-      if(!e.dir){ const b=el("button",null,"get"); b.title="Download"; b.onclick=()=>download(full); a.append(b); }
-      if(!e.dir && isText(e.name)){ const b=el("button",null,"edit"); b.onclick=()=>openEditor(full); a.append(b); }
-      const rn=el("button",null,"mv"); rn.title="Rename"; rn.onclick=()=>doRename(full,e.name); a.append(rn);
-      const rm=el("button",null,"rm"); rm.title="Delete"; rm.onclick=()=>doDelete(full,e.dir); a.append(rm);
-      tr.append(a); tb.append(tr);
-    }
-    t.append(tb); box.append(t);
+  banner();
+  if(err){ list([],CWD===WUI_TRASH?"The trash is empty":"Can't open this folder — "+err.message); return; }
+  if(!RESULTS) ENTRIES=d.entries.map(e=>Object.assign(e,{path:join(CWD,e.name)}));
+  draw(); refreshStatus();
+}
+function visible(){
+  let v=RESULTS?RESULTS.items:ENTRIES;
+  if(!HIDDEN&&!RESULTS) v=v.filter(e=>!e.name.startsWith("."));
+  if(FILTER) v=v.filter(e=>e.name.toLowerCase().includes(FILTER.toLowerCase()));
+  const k=SORT.k, d=SORT.d;
+  return v.slice().sort((a,b)=>(b.dir-a.dir)||d*(k==="size"?a.size-b.size:k==="mtime"?a.mtime-b.mtime:a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:"base"})));
+}
+function draw(){
+  const rows=visible();
+  if(!rows.length){
+    const msg=RESULTS?"Nothing matches “"+RESULTS.q+"”":FILTER?"Nothing here matches “"+FILTER+"” — press Enter to search the whole card":
+      CWD===WUI_TRASH?"The trash is empty":"This folder is empty — drop files here to upload";
+    list([],msg); return;
   }
-  refreshStatus();
+  list(rows);
+}
+function list(rows,emptyMsg){
+  const box=$("#list"); box.innerHTML="";
+  if(!rows.length){ box.append(el("div","empty",icon(RESULTS||FILTER?"search":"folder"),el("div",null,emptyMsg))); selbar(); return; }
+  const all=el("input",{type:"checkbox",title:"Select all"});
+  all.checked=rows.every(r=>SEL.has(r.path)); all.onchange=()=>{ rows.forEach(r=>all.checked?SEL.add(r.path):SEL.delete(r.path)); draw(); };
+  const th=(label,k,cls)=>{ const h=el("th",{class:(cls||"")+" sort"},label+(SORT.k===k?(SORT.d>0?" ↑":" ↓"):""));
+    h.onclick=()=>{ SORT={k,d:SORT.k===k?-SORT.d:1}; store.set("sort",SORT); draw(); }; return h; };
+  const t=el("table",null,el("thead",null,el("tr",null,el("th","ck",all),th("Name","name"),th("Size","size","num"),th("Modified","mtime","num"),el("th"))));
+  const tb=el("tbody"); t.append(tb);
+  for(const e of rows){
+    const k=kind(e.name,e.dir), tr=el("tr",{class:SEL.has(e.path)?"sel":""});
+    const ck=el("input",{type:"checkbox"}); ck.checked=SEL.has(e.path);
+    ck.onchange=()=>{ ck.checked?SEL.add(e.path):SEL.delete(e.path); tr.classList.toggle("sel",ck.checked); selbar(); all.checked=rows.every(r=>SEL.has(r.path)); };
+    const sub=(e.dir?"":human(e.size)+" · ")+when(e.mtime)+(RESULTS?" · "+parent(e.path):"");
+    const nm=el("div","nm",el("span","ftype "+k,icon(KIND_ICON[k])),el("div","grow",el("div","t",e.name),el("div","sub",sub)));
+    nm.onclick=()=>open(e);
+    if(RESULTS) nm.title=e.path;
+    const more=el("button",{class:"ibtn",title:"Actions"},icon("more")); more.onclick=()=>rowMenu(more,e);
+    tr.append(el("td","ck",ck),el("td",null,nm),el("td","num",e.dir?"":human(e.size)),el("td","num",when(e.mtime)),el("td","act",more));
+    tr.addEventListener("contextmenu",ev=>{ ev.preventDefault(); rowMenu(more,e); });
+    dragSource(tr,e.path); if(e.dir) dropTarget(tr,e.path);
+    tb.append(tr);
+  }
+  box.append(t); selbar();
+}
+function rowMenu(anchor,e){
+  const items=[];
+  if(e.dir) items.push({i:"folder",t:"Open",fn:()=>go(e.path)},{i:"dl",t:"Download as ZIP",fn:()=>zipOne(e.path)},{i:"info",t:"Folder size",fn:()=>folderSize(e.path)});
+  else items.push({i:"eye",t:"Open",fn:()=>open(e)},{i:"dl",t:"Download",fn:()=>{ download(dlUrl(e.path),e.name); log("get "+e.path,"dim"); }});
+  if(RESULTS) items.push({i:"folder",t:"Show in folder",fn:()=>go(parent(e.path))});
+  items.push(null,{i:"edit",t:"Rename",fn:()=>renameOne(e)},{i:"copy",t:"Copy to…",fn:()=>transfer([e.path],true)},
+    {i:"move",t:"Move to…",fn:()=>transfer([e.path],false)});
+  if(!e.dir) items.push({i:"hash",t:"Checksum (SHA-256)",fn:()=>hashFile(e.path)});
+  items.push(null,{i:"trash",t:inTrash(e.path)?"Delete forever":"Move to Trash",danger:true,fn:()=>remove([e.path])});
+  menu(anchor,items);
+}
+const inTrash=p=>p===WUI_TRASH||p.startsWith(WUI_TRASH+"/");
+function selbar(){
+  const b=$("#selbar"); b.innerHTML=""; const n=SEL.size; b.classList.toggle("hidden",!n); if(!n) return;
+  const paths=[...SEL];
+  b.append(el("b",null,n+" selected"),el("span","grow"),
+    el("button",{class:"btn",onclick:()=>downloadMany(paths)},icon("dl"),"Download"),
+    el("button",{class:"btn",onclick:()=>transfer(paths,true)},icon("copy"),el("span","hide-sm","Copy")),
+    el("button",{class:"btn",onclick:()=>transfer(paths,false)},icon("move"),el("span","hide-sm","Move")),
+    el("button",{class:"btn danger",onclick:()=>remove(paths)},icon("trash"),el("span","hide-sm","Delete")),
+    el("button",{class:"ibtn",title:"Clear selection",onclick:()=>{ SEL.clear(); draw(); }},icon("x")));
 }
 
-function download(path){
-  const a=document.createElement("a"); a.href="/api/download?path="+enc(path);
-  a.download=path.split("/").pop(); document.body.append(a); a.click(); a.remove();
-  log("get "+path,"dim");
+/* ---------- search ---------- */
+$("#q").addEventListener("input",e=>{ FILTER=e.target.value; if(RESULTS&&!FILTER){ RESULTS=null; render(); return; } draw(); });
+$("#q").addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.value.trim()) deepSearch(e.target.value.trim());
+  if(e.key==="Escape"){ e.target.value=""; FILTER=""; if(RESULTS){ RESULTS=null; render(); } else draw(); } });
+async function deepSearch(q){
+  $("#list").innerHTML=""; $("#list").append(el("div","empty",icon("search"),el("div",null,"Searching the card for “"+q+"”…")));
+  try{ const r=await jget("/api/find?path="+enc(CWD)+"&q="+enc(q));
+    RESULTS={q,items:r.results.map(x=>Object.assign(x,{name:base(x.path)}))}; FILTER=""; SEL.clear();
+    crumbs(); draw(); if(r.truncated) toast("Showing the first "+r.results.length+" matches — refine the search to see more");
+  }catch(e){ toast(e.message,true); render(); }
 }
-async function doDelete(path,isDir){
-  if(!confirm("Delete "+path+(isDir?" and everything inside it?":"?")))return;
-  try{ await jpost("/api/delete?path="+enc(path)); log("rm "+path,"dim"); render(); }
-  catch(e){ log(e.message,"err"); }
+
+/* ---------- actions ---------- */
+async function renameOne(e){
+  const n=await ask("Rename",e.dir?"Folder name":"File name",e.name,"Rename"); if(!n||n===e.name) return;
+  if(n.includes("/")) return toast("Names can't contain /",true);
+  await guard(async()=>{ await jpost("/api/rename?from="+enc(e.path)+"&to="+enc(join(parent(e.path),n))); render(); });
 }
-async function doRename(path,name){
-  const n=prompt("Rename to:",name); if(!n||n===name)return;
-  try{ await jpost("/api/rename?from="+enc(path)+"&to="+enc(join(parent(path),n))); render(); }
-  catch(e){ log(e.message,"err"); }
-}
-/* ---------- drag to move / drop to upload ---------- */
-// Internal moves carry our own MIME type; an OS file drag carries "Files".
-// Both land on the same targets: a folder row, a breadcrumb, or "↑ up".
-const MOVE="application/x-wui-path";
-function dragSource(tr,full){
-  tr.draggable=true;
-  tr.addEventListener("dragstart",e=>{ e.dataTransfer.setData(MOVE,full);
-    e.dataTransfer.effectAllowed="move"; tr.classList.add("dragging"); });
-  tr.addEventListener("dragend",()=>tr.classList.remove("dragging"));
-}
-function dropTarget(node,dir){
-  const wants=e=>e.dataTransfer.types.includes(MOVE)||e.dataTransfer.types.includes("Files");
-  node.addEventListener("dragover",e=>{ if(!wants(e))return;
-    e.preventDefault(); e.stopPropagation(); node.classList.add("into"); });
-  node.addEventListener("dragleave",()=>node.classList.remove("into"));
-  node.addEventListener("drop",e=>{ if(!wants(e))return;
-    e.preventDefault(); e.stopPropagation(); node.classList.remove("into"); endDrag();
-    const to=(typeof dir==="function")?dir():dir, from=e.dataTransfer.getData(MOVE);
-    if(from) doMove(from,to); else takeDrop(e,to);
-  });
+async function remove(paths){
+  const forever=paths.every(inTrash), what=paths.length===1?"“"+base(paths[0])+"”":paths.length+" items";
+  if(forever&&!await confirmBox("Delete forever?","Permanently delete "+what+"? This can't be undone.","Delete forever",true)) return;
+  let ok=0; for(const p of paths){ try{ await jpost("/api/delete?path="+enc(p)+(forever?"":"&trash=1")); ok++; SEL.delete(p); }catch(e){ toast(e.message,true); } }
+  if(ok) toast(forever?"Deleted "+ok+" item"+(ok>1?"s":""):"Moved "+ok+" item"+(ok>1?"s":"")+" to the Trash");
+  if(RESULTS) RESULTS.items=RESULTS.items.filter(x=>!paths.includes(x.path)||SEL.has(x.path));
+  render();
 }
 async function doMove(from,dir){
-  const name=from.split("/").pop(), to=join(dir,name);
-  if(to===from) return;
-  if((dir+"/").startsWith(from+"/")) return log("cannot move "+from+" inside itself","err");
-  try{ await jpost("/api/rename?from="+enc(from)+"&to="+enc(to)); log("mv "+from+" "+to,"dim"); render(); }
-  catch(e){ log(e.message,"err"); }
-}
-
-$("#bNewDir").onclick=async()=>{ const n=prompt("New folder name:"); if(!n)return;
-  try{ await jpost("/api/mkdir?path="+enc(join(CWD,n))); render(); }catch(e){ log(e.message,"err"); } };
-$("#bNewFile").onclick=async()=>{ const n=prompt("New file name:"); if(!n)return;
-  try{ await jpost("/api/touch?path="+enc(join(CWD,n))); render(); openEditor(join(CWD,n)); }catch(e){ log(e.message,"err"); } };
-$("#bUp").onclick=()=>go(parent(CWD));
-dropTarget($("#bUp"),()=>parent(CWD));
-$("#bReload").onclick=()=>render();
-
-/* ---------- editor ---------- */
-const MAXEDIT=256*1024;
-async function openEditor(path){
-  let text="", truncated=false;
-  try{
-    // Ask for one byte more than we will edit: if it comes back, the file is
-    // larger than the editor holds and saving it would truncate the original.
-    const r=await api("/api/download?path="+enc(path)+"&max="+(MAXEDIT+1));
-    if(!r.ok) throw new Error("http "+r.status);
-    const buf=await r.arrayBuffer();
-    truncated = buf.byteLength>MAXEDIT;
-    text=new TextDecoder().decode(truncated?buf.slice(0,MAXEDIT):buf);
-  }catch(e){ log("open "+path+": "+e.message,"err"); return; }
-  const sh=$("#sheet"); sh.innerHTML="";
-  const h=el("header"); h.append(el("div","brand",path));
-  const sp=el("div"); sp.style.marginLeft="auto"; sp.className="hint";
-  sp.textContent = truncated ? ("first "+human(MAXEDIT)+" only · read-only") : (human(text.length)+" · utf-8");
-  if(truncated) sp.style.color="var(--warn)";
-  h.append(sp); sh.append(h);
-  const body=el("div","body"); const ta=el("textarea"); ta.id="edit"; ta.value=text; body.append(ta); sh.append(body);
-  const foot=el("div","foot");
-  const cancel=el("button","btn","close"); cancel.onclick=closeModal;
-  if(truncated){                       // never offer a save that would cut the file off
-    ta.readOnly=true;
-    const note=el("div","hint","Too large to edit safely — download it instead.");
-    note.style.marginRight="auto"; foot.append(note,cancel); sh.append(foot);
-    $("#modal").classList.add("on"); return;
+  const to=join(dir,base(from)); if(to===from||parent(from)===dir) return;
+  if((dir+"/").startsWith(from+"/")) return toast("Can't move a folder inside itself",true);
+  try{ await jpost("/api/rename?from="+enc(from)+"&to="+enc(to)); log("mv "+from+" "+to,"dim"); }
+  catch(e){
+    if(!e.message.startsWith("already exists")) return toast(e.message,true);
+    if(!await confirmBox("Replace “"+base(from)+"”?","“"+(dir==="/"?"SD card":base(dir))+"” already has an item with this name. Replace it? The old one goes to the Trash.","Replace",true)) return;
+    await guard(async()=>{ await jpost("/api/delete?path="+enc(to)+"&trash=1"); await jpost("/api/rename?from="+enc(from)+"&to="+enc(to)); });
   }
-  const save=el("button","btn primary","save");
-  save.onclick=async()=>{ save.disabled=true; save.textContent="saving…";
-    try{ await putBlob(path,new Blob([ta.value])); closeModal(); render(); log("saved "+path,"dim"); }
-    catch(e){ log(e.message,"err"); save.disabled=false; save.textContent="save"; } };
-  foot.append(cancel,save); sh.append(foot);
-  $("#modal").classList.add("on"); setTimeout(()=>ta.focus(),30);
-  ta.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="s"){e.preventDefault();save.onclick();}
-    if(e.key==="Tab"){e.preventDefault(); const s=ta.selectionStart; ta.setRangeText("  ",s,ta.selectionEnd,"end");} });
 }
-function closeModal(){ $("#modal").classList.remove("on"); $("#sheet").innerHTML=""; }
-$("#modal").addEventListener("click",e=>{ if(e.target.id==="modal") closeModal(); });
-addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal();
-  if(e.ctrlKey&&e.key==="`"){ e.preventDefault(); $("#console").classList.toggle("hidden"); } });
+async function transfer(paths,copy){
+  const dir=await pickFolder(copy?"Copy to…":"Move to…",copy?"Copy here":"Move here"); if(dir==null) return;
+  if(copy){
+    const body=paths.map(p=>{ let to=join(dir,base(p)); if(to===p) to=join(dir,"Copy of "+base(p)); return p+"\t"+to; }).join("\n");
+    await guard(async()=>{ await jpost("/api/copy",body); watchJob("Copying"); });
+  } else { for(const p of paths) await doMove(p,dir); SEL.clear(); render(); }
+}
+function zipOne(path){ download("/api/zip?path="+enc(path),base(path)+".zip"); log("zip "+path,"dim"); }
+async function downloadMany(paths){
+  if(paths.length===1){ const e=[...ENTRIES,...(RESULTS?RESULTS.items:[])].find(x=>x.path===paths[0]);
+    if(e&&!e.dir){ download(dlUrl(e.path),e.name); return; } return zipOne(paths[0]); }
+  await guard(async()=>{ const t=await jpost("/api/zipticket",paths.join("\n"));
+    const name=(CWD==="/"?"files":base(CWD))+".zip"; download("/api/zip?t="+t.t+"&name="+enc(name),name); });
+}
+async function folderSize(path){ await guard(async()=>{ const r=await jget("/api/du?path="+enc(path)); toast("“"+base(path)+"” holds "+human(r.bytes)); }); }
+async function hashFile(path){ await guard(async()=>{ await jpost("/api/hash?path="+enc(path)); watchJob("Checksum"); }); }
+
+/* folder picker */
+function pickFolder(title,okText){ return new Promise(res=>{
+  let at=CWD, done=false;
+  const finish=v=>{ done=true; closeModal(); res(v); };
+  const show=async()=>{
+    const body=el("div"), c=el("div","crumbs"), l=el("div","list");
+    const root=el("a",{title:"SD card"},icon("sd")); root.onclick=()=>{ at="/"; show(); }; c.append(root);
+    let acc="/"; for(const p of at.split("/").filter(Boolean)){ acc=join(acc,p); const q=acc; c.append(el("span",null,"/"));
+      const a=el("a",null,p); a.onclick=()=>{ at=q; show(); }; c.append(a); }
+    body.append(c,el("div",{style:"height:8px"}),l);
+    onModalClose=()=>{ if(!done) res(null); };
+    modal(title,body,[el("button",{class:"btn",onclick:async()=>{
+        onModalClose=null; const n=await ask("New folder","Folder name","","Create");
+        if(n&&await guard(()=>jpost("/api/mkdir?path="+enc(join(at,n))))) at=join(at,n);
+        show(); }},icon("plus"),"New folder"),
+      el("span","grow"),el("button",{class:"btn",onclick:closeModal},"Cancel"),
+      el("button",{class:"btn primary",onclick:()=>finish(at)},okText)],"narrow");
+    try{ const d=await jget("/api/list?path="+enc(at));
+      const dirs=d.entries.filter(e=>e.dir&&(HIDDEN||!e.name.startsWith("."))).sort((a,b)=>a.name.localeCompare(b.name));
+      if(!dirs.length) l.append(el("div","muted","No folders inside"));
+      for(const e of dirs){ const r=el("div",{style:"cursor:pointer"},el("span","ftype dir",icon("folder")),e.name);
+        r.onclick=()=>{ at=join(at,e.name); show(); }; l.append(r); }
+    }catch(e){ l.append(el("div","muted",e.message)); }
+  };
+  show();
+}); }
+
+/* ---------- background jobs ---------- */
+let jobTimer=null;
+function watchJob(label){
+  const c=card(label,()=>jpost("/api/job/cancel").catch(()=>{})); clearInterval(jobTimer);
+  jobTimer=setInterval(async()=>{ let j; try{ j=await jget("/api/job"); }catch(e){ return; }
+    c.name(label+" "+(j.label||"")); if(j.total) c.set(j.done/j.total,human(j.done)+" / "+human(j.total));
+    if(j.state==="running") return;
+    clearInterval(jobTimer);
+    if(j.state==="error"){ c.fail(j.error); toast(j.error,true); return; }
+    c.done();
+    if(j.kind==="hash") showHash(j.label,j.result);
+    else if(j.kind==="firmware") restarting();
+    else { toast("Done: "+(j.result||label)); render(); }
+  },600);
+}
+function showHash(name,hex){ modal("SHA-256 of "+name,el("div",null,el("p","muted small","Compare this with the checksum the file's publisher gives you."),
+  el("code","addr",hex)),[el("button",{class:"btn",onclick:()=>{ navigator.clipboard&&navigator.clipboard.writeText(hex); toast("Copied"); }},icon("copy"),"Copy"),el("button",{class:"btn primary",onclick:closeModal},"Done")],"narrow"); }
+
+/* ---------- previews ---------- */
+const MAXEDIT=256*1024;
+async function open(e){
+  if(e.dir) return go(e.path);
+  const k=kind(e.name,false);
+  if(k==="img") return gallery(e);
+  if(k==="vid"||k==="aud"){ const m=el(k==="vid"?"video":"audio",{controls:true,autoplay:true,src:dlUrl(e.path,true),preload:"metadata"});
+    return modal(e.name,el("div","viewer",m),previewFoot(e)); }
+  if(k==="pdf"||/^html?$/.test(EXT(e.name))) return modal(e.name,el("div","viewer",el("iframe",{src:dlUrl(e.path,true),sandbox:/^html?$/.test(EXT(e.name))?"":false})),previewFoot(e));
+  if(k==="txt") return openText(e);
+  if(k==="bin") return firmwareFile(e);
+  return infoSheet(e);
+}
+function previewFoot(e){ return [el("button",{class:"btn",onclick:()=>infoSheet(e)},icon("info"),"Info"),
+  el("a",{class:"btn",href:dlUrl(e.path,true),target:"_blank",rel:"noopener"},icon("eye"),"Open in new tab"),
+  el("button",{class:"btn primary",onclick:()=>download(dlUrl(e.path),e.name)},icon("dl"),"Download")]; }
+function gallery(e){
+  const imgs=visible().filter(x=>kind(x.name,x.dir)==="img"); let i=Math.max(0,imgs.findIndex(x=>x.path===e.path));
+  const img=el("img",{alt:""}), v=el("div","viewer",img), cap=el("div","muted small");
+  const show=()=>{ const x=imgs[i]; img.src=dlUrl(x.path,true); $("#sheet .t").textContent=x.name; cap.textContent=(i+1)+" of "+imgs.length+" · "+human(x.size); };
+  if(imgs.length>1){ v.append(el("button",{class:"nav l",title:"Previous",onclick:()=>{ i=(i-1+imgs.length)%imgs.length; show(); }},"‹"),
+                      el("button",{class:"nav r",title:"Next",onclick:()=>{ i=(i+1)%imgs.length; show(); }},"›")); }
+  modal(e.name,el("div",null,v,el("div",{style:"margin-top:8px"},cap)),[el("button",{class:"btn primary",onclick:()=>download(dlUrl(imgs[i].path),imgs[i].name)},icon("dl"),"Download")]);
+  show(); gallery.step=d=>{ if($("#modal.on")&&imgs.length>1){ i=(i+d+imgs.length)%imgs.length; show(); } };
+}
+gallery.step=null;
+async function openText(e){
+  let text="",truncated=false;
+  try{ const r=await api(dlUrl(e.path,true)+"&max="+(MAXEDIT+1)); if(!r.ok) throw new Error("error "+r.status);
+    const buf=await r.arrayBuffer(); truncated=buf.byteLength>MAXEDIT; text=new TextDecoder().decode(truncated?buf.slice(0,MAXEDIT):buf);
+  }catch(err){ return toast("Can't open "+e.name+": "+err.message,true); }
+  if(/^(md|markdown)$/.test(EXT(e.name))){
+    const view=el("div","md"); view.innerHTML=markdown(text);
+    return modal(e.name,view,[el("button",{class:"btn",onclick:()=>editor(e,text,truncated)},icon("edit"),"Edit"),...previewFoot(e).slice(2)]);
+  }
+  editor(e,text,truncated);
+}
+function editor(e,text,truncated){
+  const ta=el("textarea",{id:"edit",spellcheck:"false"}); ta.value=text; ta.readOnly=truncated;
+  const save=el("button",{class:"btn primary"},icon("check"),"Save");
+  save.onclick=async()=>{ save.disabled=true; try{ await putBlob(e.path,new Blob([ta.value])); toast("Saved "+e.name); closeModal(); render(); }
+    catch(err){ toast(err.message,true); save.disabled=false; } };
+  const foot=truncated?[el("span","muted small grow","Showing the first "+human(MAXEDIT)+" — too large to edit here safely."),previewFoot(e)[2]]
+                      :[el("span","muted small grow","Ctrl+S to save"),el("button",{class:"btn",onclick:closeModal},"Close"),save];
+  modal(e.name,ta,foot);
+  ta.addEventListener("keydown",ev=>{ if((ev.ctrlKey||ev.metaKey)&&ev.key==="s"){ ev.preventDefault(); if(!truncated) save.onclick(); }
+    if(ev.key==="Tab"){ ev.preventDefault(); ta.setRangeText("  ",ta.selectionStart,ta.selectionEnd,"end"); } });
+  setTimeout(()=>ta.focus(),30);
+}
+function markdown(src){
+  const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const inline=s=>esc(s).replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/\*([^*]+)\*/g,"<i>$1</i>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|[^):\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const out=[]; let list=null, code=null, para=[];
+  const flush=()=>{ if(para.length){ out.push("<p>"+inline(para.join(" "))+"</p>"); para=[]; } if(list){ out.push("</"+list+">"); list=null; } };
+  for(const line of src.split("\n")){
+    if(code!==null){ if(/^```/.test(line)){ out.push("<pre><code>"+esc(code)+"</code></pre>"); code=null; } else code+=line+"\n"; continue; }
+    let m;
+    if(/^```/.test(line)){ flush(); code=""; }
+    else if((m=line.match(/^(#{1,6})\s+(.*)/))){ flush(); out.push("<h"+m[1].length+">"+inline(m[2])+"</h"+m[1].length+">"); }
+    else if((m=line.match(/^\s*([-*+]|\d+\.)\s+(.*)/))){ if(para.length){ out.push("<p>"+inline(para.join(" "))+"</p>"); para=[]; }
+      const t=/\d/.test(m[1])?"ol":"ul"; if(list!==t){ if(list) out.push("</"+list+">"); out.push("<"+t+">"); list=t; } out.push("<li>"+inline(m[2])+"</li>"); }
+    else if(/^>\s?/.test(line)){ flush(); out.push("<blockquote>"+inline(line.replace(/^>\s?/,""))+"</blockquote>"); }
+    else if(/^(-{3,}|\*{3,})\s*$/.test(line)){ flush(); out.push("<hr>"); }
+    else if(!line.trim()) flush();
+    else para.push(line.trim());
+  }
+  if(code!==null) out.push("<pre><code>"+esc(code)+"</code></pre>");
+  flush(); return out.join("");
+}
+function infoSheet(e){
+  const kv=el("dl","kv",el("dt",null,"Name"),el("dd",null,e.name),el("dt",null,"Where"),el("dd",null,parent(e.path)),
+    el("dt",null,"Size"),el("dd",null,human(e.size)+(e.size>=1024?" ("+e.size.toLocaleString()+" bytes)":"")),el("dt",null,"Modified"),el("dd",null,when(e.mtime)||"–"));
+  modal(e.name,kv,[el("button",{class:"btn",onclick:()=>{ closeModal(); hashFile(e.path); }},icon("hash"),"Checksum"),
+    el("button",{class:"btn primary",onclick:()=>download(dlUrl(e.path),e.name)},icon("dl"),"Download")],"narrow");
+}
+
+/* ---------- firmware ---------- */
+async function firmwareFile(e){
+  let c; try{ c=await jpost("/api/firmware/check?path="+enc(e.path)); }catch(err){ return toast(err.message,true); }
+  const body=el("div");
+  if(!c.ok){ body.append(el("p",null,"This .bin isn't a firmware file this device can use: ",el("b",null,c.reason))); return modal(e.name,body,[previewFoot(e)[2]],"narrow"); }
+  body.append(el("p",null,"An ESP32-S3 app, "+human(c.size)+"."));
+  const foot=[el("button",{class:"btn",onclick:closeModal},"Close")];
+  if(c.launcher){
+    body.append(el("p",null,"You're running under ",el("b",null,"M5Launcher"),". To install it: tap ",el("b",null,"Back to Launcher"),
+      ", then in Launcher pick ",el("b",null,"SD"),", open ",el("code",null,e.path),", and choose ",el("b",null,"Install"),"."));
+    foot.push(el("button",{class:"btn primary",onclick:launcher},"Back to Launcher"));
+  } else if(c.can_update){
+    body.append(el("p",null,"Install it now? The device restarts into the new firmware (about a minute). Your files and settings stay."));
+    foot.push(el("button",{class:"btn primary",onclick:async()=>{ closeModal(); await guard(async()=>{ await jpost("/api/firmware/install?path="+enc(e.path)); watchJob("Installing"); }); }},"Install"));
+  } else body.append(el("p","muted","This build can't update itself. Flash it from a computer, or install it with M5Launcher."));
+  modal(e.name,body,foot,"narrow");
+}
+async function launcher(){ closeModal(); if(!await confirmBox("Back to Launcher?","The Cardputer leaves PocketWUI and opens M5Launcher.","Go")) return;
+  jpost("/api/launcher").catch(()=>{}); toast("Switching to M5Launcher…"); setTimeout(showLogin,1500); }
+function restarting(){ toast("Restarting… reconnecting in a moment"); let n=0; const t=setInterval(async()=>{
+  if(++n>60){ clearInterval(t); return; } try{ const r=await fetch("/api/status",{credentials:"same-origin"}); if(r.ok||r.status===401){ clearInterval(t); location.reload(); } }catch(e){} },2000); }
+
+/* ---------- drag to move / drop to upload ---------- */
+const MOVE="application/x-wui-path";
+function dragSource(tr,full){ tr.draggable=true;
+  tr.addEventListener("dragstart",e=>{ const paths=SEL.has(full)?[...SEL]:[full]; e.dataTransfer.setData(MOVE,JSON.stringify(paths)); e.dataTransfer.effectAllowed="move"; tr.classList.add("dragging"); });
+  tr.addEventListener("dragend",()=>tr.classList.remove("dragging")); }
+function dropTarget(node,dir){
+  const wants=e=>e.dataTransfer.types.includes(MOVE)||e.dataTransfer.types.includes("Files");
+  node.addEventListener("dragover",e=>{ if(!wants(e))return; e.preventDefault(); e.stopPropagation(); node.classList.add("into"); });
+  node.addEventListener("dragleave",()=>node.classList.remove("into"));
+  node.addEventListener("drop",async e=>{ if(!wants(e))return; e.preventDefault(); e.stopPropagation(); node.classList.remove("into"); endDrag();
+    const to=typeof dir==="function"?dir():dir, raw=e.dataTransfer.getData(MOVE);
+    if(raw){ for(const p of JSON.parse(raw)) await doMove(p,to); SEL.clear(); render(); } else takeDrop(e,to); });
+}
 
 /* ---------- upload (chunked, resumable, any size) ---------- */
-const CHUNK=48*1024, RETRIES=4;
-function jobCard(name){
-  const c=el("div","job"); const row=el("div","row");
-  const fn=el("div","fn",name), pc=el("div","pc","0%"), x=el("button",null,"✕");
-  row.append(fn,pc,x); const tr=el("div","track"), fl=el("div","fill"); tr.append(fl);
-  c.append(row,tr); $("#jobs").append(c);
-  let cancelled=false; x.onclick=()=>{ cancelled=true; c.remove(); };
-  return { set:(p,txt)=>{ fl.style.width=(p*100).toFixed(1)+"%"; pc.textContent=txt??Math.round(p*100)+"%"; },
-           fail:m=>{ c.classList.add("fail"); pc.textContent=m; fl.style.width="100%"; },
-           done:()=>{ c.classList.add("done"); pc.textContent="done"; fl.style.width="100%"; setTimeout(()=>c.remove(),1800); },
-           cancelled:()=>cancelled };
+const CHUNK=256*1024, RETRIES=4;
+function card(name,onCancel){
+  const fn=el("div","fn",name), pc=el("span","muted small","0%"), x=el("button",{class:"ibtn",title:"Cancel"},icon("x"));
+  const fill=el("div","fill"), c=el("div","job",el("div","row",fn,pc,x),el("div","track",fill)); $("#jobs").append(c);
+  let cancelled=false; x.onclick=()=>{ cancelled=true; c.remove(); if(onCancel) onCancel(); };
+  return { set:(p,txt)=>{ fill.style.width=(p*100).toFixed(1)+"%"; pc.textContent=txt??Math.round(p*100)+"%"; },
+           name:t=>fn.textContent=t, fail:m=>{ c.classList.add("fail"); pc.textContent=String(m).slice(0,48); fill.style.width="100%"; setTimeout(()=>c.remove(),8000); },
+           done:()=>{ pc.textContent="done"; fill.style.width="100%"; setTimeout(()=>c.remove(),1500); }, cancelled:()=>cancelled };
 }
 async function putBlob(path, blob, job){
   const total=blob.size; let off=0, stuck=0, lastResync=-1;
@@ -407,8 +711,7 @@ async function putBlob(path, blob, job){
     if(resync!==null){
       // A chunk that died mid-write leaves the card holding part of it; the 409
       // tells us where the file really ends. That is normal recovery on a flaky
-      // link, so only a resync that keeps landing on the SAME offset is a fault —
-      // counting every resync failed long uploads that were in fact progressing.
+      // link, so only a resync that keeps landing on the SAME offset is a fault.
       if(resync>total) throw new Error("device holds "+human(resync)+" for this path, more than the "+human(total)+" being sent");
       if(resync===lastResync){ if(++stuck>5) throw new Error("upload stuck at "+human(resync)+" — device is not accepting this chunk"); }
       else { stuck=0; lastResync=resync; }
@@ -422,76 +725,159 @@ async function putBlob(path, blob, job){
 }
 // An upload is a list of {rel} folders and {rel,file} files, so a picked
 // folder, a dropped folder and a plain multi-file selection all take one path.
-async function ensureDir(path, base, made){
-  if(path===base || path==="/" || made.has(path)) return;
-  await ensureDir(parent(path), base, made);
-  try{ await jpost("/api/mkdir?path="+enc(path)); }
-  catch(e){ made.add(path); throw e; }
-  made.add(path);
+async function ensureDir(path, baseDir, made){
+  if(path===baseDir || path==="/" || made.has(path)) return;
+  await ensureDir(parent(path), baseDir, made);
+  await jpost("/api/mkdir?path="+enc(path)); made.add(path);
 }
-async function uploadItems(items, base){
-  base=base||CWD; const made=new Set();
+async function uploadItems(items, baseDir){
+  baseDir=baseDir||CWD; const made=new Set();
+  if(baseDir===CWD){ const clash=items.filter(it=>!it.dir&&!it.rel.includes("/")&&ENTRIES.some(e=>e.name===it.rel&&!e.dir));
+    if(clash.length&&!await confirmBox("Replace files?",clash.length+" file"+(clash.length>1?"s":"")+" with the same name already exist here. Replace "+(clash.length>1?"them":"it")+"?","Replace",true)) return; }
+  let n=0, bytes=0; const t0=Date.now();
   for(const it of items){
-    const dest=join(base,it.rel);
-    try{
-      if(it.dir){ await ensureDir(dest,base,made); continue; }
-      await ensureDir(parent(dest),base,made);
-    }catch(e){ log(e.message,"err"); continue; }
-    const job=jobCard(it.rel), t=Date.now();
-    try{ await putBlob(dest,it.file,job); job.done();
-      log("put "+dest+"  "+human(it.file.size)+"  "+((it.file.size/1024)/((Date.now()-t)/1000)).toFixed(0)+" KB/s","dim");
-    }catch(e){ job.fail(e.message.slice(0,42)); log(e.message,"err"); }
-    render();
+    const dest=join(baseDir,it.rel);
+    try{ if(it.dir){ await ensureDir(dest,baseDir,made); continue; } await ensureDir(parent(dest),baseDir,made); }
+    catch(e){ toast(e.message,true); continue; }
+    const job=card(it.rel), t=Date.now();
+    try{ await putBlob(dest,it.file,job); job.done(); n++; bytes+=it.file.size;
+      log("put "+dest+"  "+human(it.file.size)+"  "+human(it.file.size/Math.max(.001,(Date.now()-t)/1000))+"/s","dim");
+    }catch(e){ job.fail(e.message); if(e.message!=="cancelled") toast(e.message,true); }
+    if(parent(dest)===CWD) render();
   }
+  if(n) toast("Uploaded "+n+" file"+(n>1?"s":"")+" · "+human(bytes)+" at "+human(bytes/Math.max(.001,(Date.now()-t0)/1000))+"/s");
   render();
 }
-// webkitRelativePath is set by <input webkitdirectory>; plain picks have none.
 const asItems=files=>[...files].map(f=>({file:f, rel:f.webkitRelativePath||f.name}));
-
-// Dropped folders only exist as DataTransfer entries — read them recursively.
 async function walkEntry(entry, prefix){
-  if(entry.isFile){
-    const f=await new Promise((ok,bad)=>entry.file(ok,bad));
-    return [{file:f, rel:prefix+entry.name}];
-  }
+  if(entry.isFile){ const f=await new Promise((ok,bad)=>entry.file(ok,bad)); return [{file:f, rel:prefix+entry.name}]; }
   const dir=prefix+entry.name, out=[{dir:true, rel:dir}], rd=entry.createReader();
   let batch; // readEntries yields at most ~100 at a time and [] when exhausted
-  do{ batch=await new Promise((ok,bad)=>rd.readEntries(ok,bad));
-      for(const k of batch) out.push(...await walkEntry(k, dir+"/"));
-  }while(batch.length);
+  do{ batch=await new Promise((ok,bad)=>rd.readEntries(ok,bad)); for(const k of batch) out.push(...await walkEntry(k, dir+"/")); }while(batch.length);
   return out;
 }
-async function takeDrop(e, base){
+async function takeDrop(e, baseDir){
   // dataTransfer is emptied once this handler yields — grab the entries first.
-  const entries=[...(e.dataTransfer.items||[])]
-    .map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+  const entries=[...(e.dataTransfer.items||[])].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
   const files=[...e.dataTransfer.files];
-  if(!entries.length) return files.length && uploadItems(asItems(files), base);
+  if(!entries.length) return files.length && uploadItems(asItems(files), baseDir);
   const items=[]; for(const en of entries) items.push(...await walkEntry(en,""));
-  return uploadItems(items, base);
+  return uploadItems(items, baseDir);
 }
-
 $("#bUpload").onclick=()=>$("#file").click();
-$("#bUploadDir").onclick=()=>$("#dir").click();
 $("#file").onchange=e=>{ uploadItems(asItems(e.target.files)); e.target.value=""; };
 $("#dir").onchange=e=>{ uploadItems(asItems(e.target.files)); e.target.value=""; };
 let dragDepth=0;
 const endDrag=()=>{ dragDepth=0; $("#drop").classList.remove("on"); };
-addEventListener("dragenter",e=>{ e.preventDefault();
-  if(++dragDepth===1 && e.dataTransfer.types.includes("Files")) $("#drop").classList.add("on"); });
+addEventListener("dragenter",e=>{ e.preventDefault(); if(++dragDepth===1&&e.dataTransfer.types.includes("Files")) $("#drop").classList.add("on"); });
 addEventListener("dragover",e=>e.preventDefault());
 addEventListener("dragleave",()=>{ if(--dragDepth<=0) endDrag(); });
-addEventListener("drop",e=>{ e.preventDefault(); endDrag();
-  if(!e.dataTransfer.getData(MOVE)) takeDrop(e,CWD); });
+addEventListener("drop",e=>{ e.preventDefault(); endDrag(); if(!e.dataTransfer.getData(MOVE)) takeDrop(e,CWD); });
+addEventListener("paste",e=>{ if(e.target.closest&&e.target.closest("input,textarea")) return;
+  const files=[...(e.clipboardData&&e.clipboardData.files)||[]]; if(!files.length) return;
+  const stamp=new Date().toISOString().slice(0,19).replace(/[-:T]/g,"");
+  uploadItems(files.map((f,i)=>({file:f,rel:f.name&&f.name!=="image.png"?f.name:"pasted-"+stamp+(i?"-"+i:"")+"."+(f.type.split("/")[1]||"bin")}))); });
+
+$("#bNew").onclick=()=>menu($("#bNew"),[
+  {i:"folder",t:"New folder",fn:async()=>{ const n=await ask("New folder","Folder name","","Create"); if(n) await guard(async()=>{ await jpost("/api/mkdir?path="+enc(join(CWD,n))); render(); }); }},
+  {i:"txt",t:"New text file",fn:async()=>{ const n=await ask("New text file","File name","notes.txt","Create"); if(!n) return;
+    await guard(async()=>{ await jpost("/api/touch?path="+enc(join(CWD,n))); await render(); editor({name:n,path:join(CWD,n),size:0},"",false); }); }},
+  null,{i:"upload",t:"Upload a folder",fn:()=>$("#dir").click()}]);
+$("#bMore").onclick=()=>menu($("#bMore"),[
+  {i:"refresh",t:"Refresh",fn:()=>render()},
+  {i:"up",t:"Up one folder",fn:()=>go(parent(CWD))},
+  {i:"dl",t:"Download this folder (ZIP)",fn:()=>CWD==="/"?toast("Pick a folder to download — the whole card is too big",true):zipOne(CWD)},
+  {i:"eye",t:(HIDDEN?"Hide":"Show")+" hidden files",fn:()=>{ HIDDEN=!HIDDEN; store.set("hidden",HIDDEN); draw(); }},
+  null,{i:"trash",t:"Trash",fn:()=>openTrash()}]);
+async function openTrash(){ await go(WUI_TRASH); }
+
+/* ---------- settings ---------- */
+$("#bSet").onclick=()=>settings("wifi");
+async function settings(tab){
+  await refreshStatus(); const S=STATUS;
+  const tabs=[["wifi","Wi‑Fi"],["usb","USB & network drive"],["device","Device"],["about","About"]];
+  const bar=el("div","tabs"), body=el("div");
+  for(const [id,label] of tabs) bar.append(el("button",{class:id===tab?"on":"",onclick:()=>settings(id)},label));
+  const sh=modal("Settings",body); sh.parentNode.insertBefore(bar,sh);
+  const sec=(title,...kids)=>el("div","sec",el("h3",null,title),...kids);
+  const toggle=(label,on,fn)=>{ const c=el("input",{type:"checkbox"}); c.checked=on; c.onchange=()=>fn(c.checked); return el("label","switch",c,label); };
+  if(tab==="wifi"){
+    body.append(sec("Connection",el("p",null,S.ap?"Not on a Wi‑Fi network — the Cardputer is running its own hotspot, ":"Connected to ",el("b",null,S.ap?S.ap_ssid:S.ssid),
+      S.ap?".":" ("+S.rssi+" dBm). Reach it at ",S.ap?"":el("code","addr","http://"+S.host+".local"),S.ap?"":" or ",S.ap?"":el("code","addr",S.ip))));
+    const saved=el("div","list"); body.append(sec("Saved networks",el("p","muted small","Up to 5. On start-up the strongest one in range is joined; from hotspot mode they are retried every minute."),saved));
+    try{ const r=await jget("/api/wifi/saved"); if(!r.saved.length) saved.append(el("div","muted","None yet"));
+      for(const s of r.saved) saved.append(el("div",null,icon("wifi"),el("span","grow",s),el("button",{class:"btn",onclick:async()=>{ await guard(()=>jpost("/api/wifi/forget",{ssid:s})); settings("wifi"); }},"Forget"))); }catch(e){}
+    const found=el("div","list hidden");
+    body.append(sec("Add a network",el("p",null,el("button",{class:"btn",onclick:async function(){ this.disabled=true; this.textContent="Scanning…";
+      try{ const r=await jget("/api/wifi/scan"); found.innerHTML=""; found.classList.remove("hidden");
+        for(const n of r.networks) found.append(el("div",null,icon("wifi"),el("span","grow",n.ssid,el("span","muted small","  "+n.rssi+" dBm"+(n.secure?"":" · open"))),
+          el("button",{class:"btn",onclick:()=>joinWifi(n.ssid,n.secure)}, n.saved?"Reconnect":"Join"))); }
+      catch(e){ toast(e.message,true); } this.disabled=false; this.textContent="Scan for networks"; }},icon("search"),"Scan for networks"),
+      " ",el("button",{class:"btn",onclick:async()=>{ const s=await ask("Join a hidden network","Network name (SSID)","","Next"); if(s) joinWifi(s,true); }},"Hidden network…")),found));
+    const key=el("input",{type:"password",value:"",placeholder:"new key, 8+ characters"});
+    body.append(sec("Hotspot",el("p",null,"When no saved network is around, the Cardputer makes its own: ",el("b",null,S.ap_ssid),". Its key is on the device screen."),
+      toggle(" Keep the hotspot on even when connected to Wi‑Fi",S.keep_ap,async v=>{ await guard(()=>jpost("/api/wifi/ap",{keep:v})); }),
+      el("div",{class:"row",style:"margin-top:10px"},key,el("button",{class:"btn",onclick:async()=>{ if(await guard(()=>jpost("/api/wifi/ap",{password:key.value}))) { key.value=""; toast("Hotspot key changed"); } }},"Change key"))));
+  }
+  if(tab==="usb"){
+    const u=S.usb||{};
+    body.append(sec("USB cable",el("p",null,"Plug the Cardputer into a computer with a USB‑C cable and it shows up as a network adapter. Open ",
+        el("code","addr","http://"+(u.ip||"192.168.7.1")),", no Wi‑Fi needed — and the computer keeps its own internet."),
+      el("p",null,u.running?(u.host?"✅ A computer is connected right now.":"Not plugged into a computer right now."):u.enabled?"USB starts after the next restart.":"USB features are off."),
+      toggle(" Enable USB features (network adapter and drive) — applies after a restart",u.enabled,async v=>{ await guard(()=>jpost("/api/usb",{enabled:v})); toast("Saved — restart to apply"); }),
+      el("p","muted small","While USB is on, flashing over the cable needs the G0 button held while plugging in (or turn this off first).")));
+    body.append(sec("Use the SD card as a USB drive",el("p",null,"Lend the card to the connected computer as a plain removable drive — handy for copying lots of files at once. While it's lent, this page can't browse it. Eject it on the computer to hand it back."),
+      u.drive?el("button",{class:"btn primary",onclick:()=>usbDrive(false)},"Take the card back")
+             :el("button",{class:"btn primary",disabled:!u.drive_ok,onclick:()=>usbDrive(true)},icon("usb"),"Lend it to the computer"),
+      u.drive_ok?"":el("p","muted small","Needs USB on and a card inserted at start-up.")));
+    const dav="http://"+S.host+".local/dav/";
+    body.append(sec("Network drive (WebDAV)",el("p",null,"Mount the card like a shared folder: ",el("code","addr",dav)," — sign in with any user name and your PocketWUI password."),
+      el("p","muted small","Works with macOS Finder (Go → Connect to Server), Linux file managers, Cyberduck/WinSCP/RaiDrive on Windows, VLC and Infuse (stream videos), and rclone.")));
+  }
+  if(tab==="device"){
+    const nm=el("input",{type:"text",value:S.host});
+    body.append(sec("Name",el("p",null,"Reach the Cardputer at http://",el("b",null,S.host),".local"),
+      el("div","row",nm,el("button",{class:"btn",onclick:async()=>{ if(await guard(()=>jpost("/api/name",{name:nm.value}))) { toast("Now at http://"+nm.value.toLowerCase()+".local"); settings("device"); } }},"Rename"))));
+    const p1=el("input",{type:"password",placeholder:"new password (8+ characters)",autocomplete:"new-password"});
+    body.append(sec("Password",el("div","row",p1,el("button",{class:"btn",onclick:async()=>{ if(await guard(()=>jpost("/api/passwd",{password:p1.value}))){ p1.value=""; toast("Password changed — other devices are signed out"); } }},"Change"))));
+    const fwIn=el("input",{type:"file",accept:".bin",hidden:true});
+    fwIn.onchange=async()=>{ const f=fwIn.files[0]; if(!f) return; closeModal(); const path="/firmware/"+f.name;
+      await guard(async()=>{ await jpost("/api/mkdir?path=/firmware"); const job=card("Uploading "+f.name); await putBlob(path,f,job); job.done();
+        firmwareFile({name:f.name,path,size:f.size}); }); };
+    body.append(sec("Firmware",el("p",null,"PocketWUI ",el("b",null,"v"+S.fw),S.launcher?" · running under M5Launcher":""),
+      el("div",{class:"row",style:"flex-wrap:wrap"},fwIn,el("button",{class:"btn",onclick:()=>fwIn.click()},icon("upload"),"Update firmware…"),
+        S.launcher?el("button",{class:"btn",onclick:launcher},"Back to Launcher"):"",
+        el("button",{class:"btn",onclick:async()=>{ if(await confirmBox("Restart?","PocketWUI restarts; this page reconnects by itself.","Restart")){ jpost("/api/reboot").catch(()=>{}); closeModal(); restarting(); } }},icon("refresh"),"Restart"))));
+    const th=el("select",null,...["auto","light","dark"].map(v=>el("option",{value:v,selected:store.get("theme","auto")===v},v[0].toUpperCase()+v.slice(1))));
+    th.onchange=()=>{ store.set("theme",th.value); applyTheme(); };
+    body.append(sec("Appearance",th));
+  }
+  if(tab==="about"){
+    const kv=(k,v)=>[el("dt",null,k),el("dd",null,v)];
+    body.append(el("dl","kv",...kv("Firmware",S.name+" v"+S.fw),...kv("Chip",S.chip),...kv("Memory free",human(S.heap)+" (lowest "+human(S.heap_min)+")"),
+      ...kv("Up for",Math.floor(S.uptime/3600)+" h "+Math.floor(S.uptime%3600/60)+" min"),
+      ...kv("SD card",S.sd?S.sd_type+" · "+human(S.sd_total)+" · SPI "+S.sd_hz/1e6+" MHz":"–"),
+      ...kv("Battery",S.bat>=0?S.bat+"% · "+(S.bat_mv/1000).toFixed(2)+" V":"–"),
+      ...kv("Addresses",[S.ip,S.ap_up?S.ap_ip+" (hotspot)":"",S.usb&&S.usb.running?S.usb.ip+" (USB)":""].filter(Boolean).join(" · ")),
+      ...kv("App slot",S.slot)));
+  }
+}
+async function joinWifi(ssid,secure){
+  const pw=secure?await ask("Join “"+ssid+"”","Password","","Join"):"";
+  if(pw===null) return;
+  toast("Joining "+ssid+"… (up to 15 s)");
+  try{ const r=await jpost("/api/wifi",{ssid,password:pw});
+    if(r.connected){ modal("Connected",el("div",null,el("p",null,"The Cardputer joined ",el("b",null,ssid),"."),
+      el("p",null,"If this device isn't on ",el("b",null,ssid)," yet, switch to it, then open ",el("code","addr","http://"+r.host+".local")," or ",el("code","addr","http://"+r.ip),".")),
+      [el("button",{class:"btn primary",onclick:closeModal},"Got it")],"narrow"); }
+    else toast(r.detail,true);
+  }catch(e){ toast(e.message,true); }
+}
+async function usbDrive(on){ await guard(async()=>{ await jpost("/api/usb",{drive:on}); toast(on?"The SD card is now a USB drive on your computer":"The SD card is back"); closeModal(); await refreshStatus(); render(); }); }
 
 /* ---------- console ---------- */
-function log(text,cls){ const o=$("#out"); const d=el("div",cls||null,text); o.append(d); o.scrollTop=o.scrollHeight; }
-$("#bTerm").onclick=()=>$("#console").classList.toggle("hidden");
-(function(){ let dragging=false,y0=0,h0=0; const c=$("#console");
-  $("#grip").addEventListener("mousedown",e=>{dragging=true;y0=e.clientY;h0=c.offsetHeight;e.preventDefault();});
-  addEventListener("mousemove",e=>{ if(dragging) c.style.height=Math.max(90,Math.min(innerHeight-160,h0+(y0-e.clientY)))+"px"; });
-  addEventListener("mouseup",()=>dragging=false); })();
-
+function log(text,cls){ const o=$("#out"); o.append(el("div",cls||null,text)); o.scrollTop=o.scrollHeight; }
+$("#bTerm").onclick=()=>{ $("#console").classList.toggle("hidden"); if(!$("#console").classList.contains("hidden")) $("#cmd").focus(); };
 const HIST=[]; let hi=-1;
 $("#cmd").addEventListener("keydown",e=>{
   if(e.key==="ArrowUp"){ if(hi<HIST.length-1){hi++; e.target.value=HIST[HIST.length-1-hi];} e.preventDefault(); }
@@ -499,27 +885,22 @@ $("#cmd").addEventListener("keydown",e=>{
   else if(e.key==="Enter"){ const v=e.target.value.trim(); e.target.value=""; hi=-1; if(v){HIST.push(v); runCmd(v);} }
 });
 const HELP=`commands
-  ls [path]            list directory
-  cd <path>            change directory
-  pwd                  print working directory
-  cat <file>           print file (first 8 KB)
-  head <file> [n]      first n lines (default 20)
-  edit <file>          open in editor
-  mkdir <name>         create directory
-  touch <name>         create empty file
-  rm <path>            delete file or directory (recursive)
-  mv <src> <dst>       rename / move
-  get <file>           download to browser
-  put                  open file picker and upload here
-  df                   sd card usage
-  info                 device status
-  wifi <ssid> <pass>   join a network and save it
-  passwd <new>         change the WUI password
-  reboot               restart the device
-  clear                clear this console`;
+  ls [path]            list a folder          cd <path>          change folder
+  cat <file>           print (first 8 KB)     head <file> [n]    first n lines
+  edit <file>          open in the editor     find <text|*.glob> search from here
+  mkdir <name>         new folder             touch <name>       new empty file
+  mv <src> <dst>       rename / move          cp <src> <dst>     copy (background)
+  rm <path>            to the Trash           rm -f <path>       delete for good
+  get <file>           download               zip <folder>       download as ZIP
+  put                  upload here            du <path>          folder size
+  sha256 <file>        checksum               df                 card usage
+  info                 device status          scan               Wi-Fi networks
+  wifi <ssid> <pass>   join and save          passwd <new>       change password
+  name <host>          set <host>.local       usbdrive on|off    lend card over USB
+  launcher             back to M5Launcher     reboot             restart
+  clear`;
 function abs(p){ if(!p)return CWD; if(p.startsWith("/"))return p.replace(/\/+$/,"")||"/";
-  const parts=(CWD+"/"+p).split("/"); const st=[];
-  for(const s of parts){ if(!s||s===".")continue; if(s===".."){st.pop();continue;} st.push(s); }
+  const st=[]; for(const s of (CWD+"/"+p).split("/")){ if(!s||s===".")continue; if(s===".."){st.pop();continue;} st.push(s); }
   return "/"+st.join("/"); }
 async function runCmd(line){
   log("$ "+line,"cmd");
@@ -529,54 +910,73 @@ async function runCmd(line){
       case "help": log(HELP); break;
       case "clear": $("#out").innerHTML=""; break;
       case "pwd": log(CWD); break;
-      case "ls": { const p=abs(a[0]); const d=await jget("/api/list?path="+enc(p));
-        d.entries.sort((x,y)=>(y.dir-x.dir)||x.name.localeCompare(y.name));
-        if(!d.entries.length) log("(empty)","dim");
-        for(const e of d.entries) log((e.dir?"d ":"- ")+String(e.dir?"":human(e.size)).padStart(6," ")+"  "+e.name);
-        break; }
+      case "ls": { const d=await jget("/api/list?path="+enc(abs(a[0])));
+        d.entries.sort((x,y)=>(y.dir-x.dir)||x.name.localeCompare(y.name)); if(!d.entries.length) log("(empty)","dim");
+        for(const e of d.entries) log((e.dir?"d ":"- ")+String(e.dir?"":human(e.size)).padStart(8," ")+"  "+e.name); break; }
       case "cd": { const p=abs(a[0]||"/"); await jget("/api/list?path="+enc(p)); go(p); break; }
-      case "cat": case "head": { const p=abs(a[0]); const n=c==="head"?parseInt(a[1]||"20"):0;
-        const r=await api("/api/download?path="+enc(p)+"&max=8192"); if(!r.ok)throw new Error("http "+r.status);
+      case "cat": case "head": { const n=c==="head"?parseInt(a[1]||"20"):0;
+        const r=await api("/api/download?path="+enc(abs(a[0]))+"&max=8192"); if(!r.ok) throw new Error((await r.json()).error);
         let t=await r.text(); if(n) t=t.split("\n").slice(0,n).join("\n"); log(t); break; }
-      case "edit": openEditor(abs(a[0])); break;
+      case "edit": openText({name:base(abs(a[0])),path:abs(a[0])}); break;
+      case "find": { const r=await jget("/api/find?path="+enc(CWD)+"&q="+enc(a.join(" ")));
+        for(const x of r.results) log((x.dir?"d ":"- ")+x.path); log(r.results.length+" found"+(r.truncated?" (stopped early)":""),"dim"); break; }
       case "mkdir": await jpost("/api/mkdir?path="+enc(abs(a[0]))); render(); log("ok","dim"); break;
       case "touch": await jpost("/api/touch?path="+enc(abs(a[0]))); render(); log("ok","dim"); break;
-      case "rm": await jpost("/api/delete?path="+enc(abs(a[0]))); render(); log("ok","dim"); break;
+      case "rm": { const f=a[0]==="-f", p=abs(f?a[1]:a[0]); await jpost("/api/delete?path="+enc(p)+(f?"":"&trash=1")); render(); log(f?"deleted":"moved to the Trash","dim"); break; }
       case "mv": await jpost("/api/rename?from="+enc(abs(a[0]))+"&to="+enc(abs(a[1]))); render(); log("ok","dim"); break;
-      case "get": download(abs(a[0])); break;
+      case "cp": await jpost("/api/copy?from="+enc(abs(a[0]))+"&to="+enc(abs(a[1]))); watchJob("Copying"); break;
+      case "get": download(dlUrl(abs(a[0])),base(abs(a[0]))); break;
+      case "zip": zipOne(abs(a[0])); break;
       case "put": $("#file").click(); break;
-      case "df": { await refreshStatus(); log("sd  "+human(STATUS.sd_used)+" used / "+human(STATUS.sd_total)+" total ("+(STATUS.sd_type||"?")+")"); break; }
-      case "info": { await refreshStatus();
-        log(["chip     "+STATUS.chip,"firmware "+STATUS.fw,"ssid     "+(STATUS.ssid||"(ap mode)"),
-             "ip       "+STATUS.ip,"rssi     "+(STATUS.rssi??"–")+" dBm","heap     "+human(STATUS.heap)+" free",
-             "psram    "+human(STATUS.psram),"uptime   "+Math.round(STATUS.uptime)+"s"].join("\n")); break; }
-      case "wifi": { if(a.length<1) throw new Error("usage: wifi <ssid> <password>");
-        log("connecting…","dim");
-        const j=await jpost("/api/wifi",JSON.stringify({ssid:a[0],password:a.slice(1).join(" ")}));
-        log(j.connected? "connected — ip "+j.ip : "failed to join "+a[0], j.connected?null:"err"); break; }
-      case "passwd": { if(!a[0]) throw new Error("usage: passwd <new password, min 8 chars>");
-        await jpost("/api/passwd",JSON.stringify({password:a.join(" ")}));
-        log("password changed — other sessions signed out","dim"); break; }
-      case "reboot": if(confirm("Reboot the device?")){ jpost("/api/reboot").catch(()=>{}); log("rebooting…","dim"); } break;
+      case "du": { const r=await jget("/api/du?path="+enc(abs(a[0]))); log(human(r.bytes)); break; }
+      case "sha256": await jpost("/api/hash?path="+enc(abs(a[0]))); watchJob("Checksum"); break;
+      case "df": await refreshStatus(); log("sd  "+human(STATUS.sd_used)+" used / "+human(STATUS.sd_total)+" ("+STATUS.sd_type+")"); break;
+      case "info": { await refreshStatus(); const S=STATUS;
+        log(["firmware "+S.name+" v"+S.fw,"chip     "+S.chip,"network  "+(S.ap?"hotspot "+S.ap_ssid:S.ssid+" ("+S.rssi+" dBm)"),"ip       "+S.ip,
+          "usb      "+(S.usb.running?S.usb.ip+(S.usb.host?" (connected)":""):"off"),"heap     "+human(S.heap)+" free","battery  "+(S.bat>=0?S.bat+"%":"–"),
+          "launcher "+(S.launcher?"yes":"no"),"uptime   "+S.uptime+" s"].join("\n")); break; }
+      case "scan": { const r=await jget("/api/wifi/scan"); for(const n of r.networks) log(String(n.rssi).padStart(4)+" dBm  "+n.ssid+(n.secure?"":"  (open)")+(n.saved?"  *saved":"")); break; }
+      case "wifi": { if(!a[0]) throw new Error("usage: wifi <ssid> <password>"); log("connecting…","dim");
+        const j=await jpost("/api/wifi",{ssid:a[0],password:a.slice(1).join(" ")}); log(j.connected?"connected — "+j.ip+" / "+j.host+".local":j.detail,j.connected?null:"err"); break; }
+      case "passwd": if(!a[0]) throw new Error("usage: passwd <new password, 8+ characters>");
+        await jpost("/api/passwd",{password:a.join(" ")}); log("password changed — other sessions signed out","dim"); break;
+      case "name": await jpost("/api/name",{name:a[0]||""}); log("now http://"+(a[0]||"").toLowerCase()+".local","dim"); break;
+      case "usbdrive": await usbDrive(a[0]==="on"); break;
+      case "launcher": launcher(); break;
+      case "reboot": if(await confirmBox("Restart?","PocketWUI restarts.","Restart")){ jpost("/api/reboot").catch(()=>{}); restarting(); } break;
       default: log("unknown command: "+c+" (try: help)","err");
     }
   }catch(e){ log(e.message,"err"); }
 }
 
+/* ---------- keyboard ---------- */
+addEventListener("keydown",e=>{
+  if(e.key==="Escape"){ if(openMenu) closeMenu(); else if($("#modal.on")) closeModal(); }
+  if(e.ctrlKey&&e.key==="`"){ e.preventDefault(); $("#bTerm").onclick(); }
+  const typing=e.target.closest&&e.target.closest("input,textarea,select");
+  if(!typing&&e.key==="/"){ e.preventDefault(); $("#q").focus(); }
+  if(!typing&&gallery.step&&(e.key==="ArrowLeft"||e.key==="ArrowRight")) gallery.step(e.key==="ArrowLeft"?-1:1);
+});
+
 /* ---------- boot ---------- */
 async function boot(){
-  log("Cardputer WUI — type `help` for commands.","dim");
+  log("PocketWUI — type `help` for commands.","dim");
   await refreshStatus();
-  if(STATUS.fw) log("connected to "+(STATUS.ssid||"AP")+" · "+STATUS.ip+" · fw "+STATUS.fw,"dim");
-  if(!STATUS.sd_total) log("no SD card detected — insert a card and press ⟳","err");
-  else if(STATUS.sd_hz) log("sd "+(STATUS.sd_type||"")+" · "+human(STATUS.sd_total)+" · spi "+(STATUS.sd_hz/1e6)+" MHz","dim");
+  // Keep file dates right: the Cardputer has no clock battery, so the browser lends it the time.
+  if(!STATUS.time_ok||Math.abs(STATUS.now-Date.now()/1000)>120)
+    jpost("/api/time",{epoch:Math.floor(Date.now()/1000),tz:new Date().getTimezoneOffset()}).catch(()=>{});
   await go("/");
-  setInterval(refreshStatus,15000);
+  if(!boot.timer) boot.timer=setInterval(refreshStatus,15000);
 }
 (async function(){
-  try{ const r=await fetch("/api/status",{credentials:"same-origin"});
-       if(r.ok){ showApp(); boot(); return; } }catch(e){}
+  // Arriving from the on-screen sign-in QR: /login?k=... redirects here, with
+  // ?qr=... only when the code was refused. Drop the query either way.
+  const qr=new URLSearchParams(location.search).get("qr");
+  if(location.search) history.replaceState(null,"","/");
+  try{ const r=await (await fetch("/api/session",{credentials:"same-origin"})).json(); if(r.signed_in){ showApp(); boot(); return; } }catch(e){}
   showLogin();
+  if(qr==="expired") $("#loginMsg").textContent="That QR code was already used or has expired. Press the Cardputer's button for a fresh one, or type the password.";
+  else if(qr==="locked") $("#loginMsg").textContent="Too many attempts. Wait a minute, then try again.";
 })();
 </script>
 </body>
