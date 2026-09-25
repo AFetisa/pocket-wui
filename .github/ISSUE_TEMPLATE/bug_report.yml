@@ -1,0 +1,40 @@
+name: Bug report
+description: Something doesn't work as described
+labels: [bug]
+body:
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options: [Cardputer ADV, Cardputer (original), Other]
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes:
+      label: PocketWUI version
+      description: Shown in Settings → Device, or the release you installed.
+      placeholder: "2.1.0"
+    validations: { required: true }
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installed with
+      options: [M5Launcher, M5Burner, Flashed full image (0x0)]
+    validations: { required: true }
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Connected via
+      options: [Home Wi-Fi, Phone hotspot, Cardputer's own Wi-Fi, USB cable]
+    validations: { required: true }
+  - type: input
+    id: client
+    attributes:
+      label: Browser / OS
+      placeholder: "Safari on iOS 19, Chrome on Windows 11…"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Steps to reproduce help most. Screenshots or a photo of the Cardputer screen are welcome.
+    validations: { required: true }

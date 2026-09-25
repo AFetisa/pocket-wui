@@ -4,4 +4,5 @@ src/web_assets.h
 test/hostsim/build/
 test/hostsim/pocketwui-sim
 dist/
+/build/
 __pycache__/

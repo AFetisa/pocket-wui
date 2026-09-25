@@ -9,7 +9,7 @@ Browse, preview, upload and download files on your M5Stack Cardputer / Cardputer
   <img src="docs/screenshots/phone-dark.png" alt="PocketWUI on a phone, dark mode" width="170">
 </p>
 
-> **Status:** 2.0 passes every automated test (host, simulator, browser) but hasn't run on real hardware yet. Tried it? [Open an issue](../../issues) either way.
+> **Status:** runs on the Cardputer ADV via M5Launcher. The original Cardputer should work but is untested; [reports welcome](../../issues/new/choose).
 
 ## Features
 
@@ -43,5 +43,6 @@ Forgot it? Hold the side button for 5 s to reset the password and Wi‑Fi (your 
 - **[Guide](docs/GUIDE.md)**: ways to connect, tips, M5Launcher, troubleshooting, privacy, test status
 - **[Developing](docs/DEVELOPING.md)**: build, PC simulator, tests, HTTP/WebDAV API
 - **[Changelog](CHANGELOG.md)**
+- **[Contributing](CONTRIBUTING.md)**: bugs, feature requests, pull requests
 
 Built on [M5Unified / M5GFX](https://github.com/m5stack/M5Unified), [EspUsbDevice](https://github.com/tanakamasayuki/EspUsbDevice) and [pioarduino](https://github.com/pioarduino/platform-espressif32). Works with [M5Launcher](https://github.com/bmorcelli/Launcher). [MIT licence](LICENSE).
