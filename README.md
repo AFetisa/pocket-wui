@@ -33,7 +33,7 @@ No Launcher? Flash `PocketWUI-full-flash.bin` at `0x0` with [esptool-js](https:/
 
 1. The screen shows a Wi‑Fi name, key, address and a random password.
 2. Press the side button for a QR code to join, and again for one that signs you in. Or join by hand and open `http://192.168.4.1`.
-3. Add your home Wi‑Fi in **Settings → Wi‑Fi**, then use `http://cardputer.local`.
+3. Add your home Wi‑Fi in **Settings → Wi‑Fi**, or on the Cardputer press **`w`**, pick a network (`;` / `.`), type the key and press **Enter**. Then use `http://cardputer.local`.
 4. Set your own password in **Settings → Device**.
 
 Forgot it? Hold the side button for 5 s to reset the password and Wi‑Fi (your files are kept).
