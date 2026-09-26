@@ -78,7 +78,7 @@ page waits until it finishes.
 
 ## Status
 
-**Version 2.0.** Here's what has and hasn't been verified:
+**Version 2.1.** Here's what has and hasn't been verified:
 
 - ✅ Builds cleanly for the ESP32-S3 (CI on every push).
 - ✅ The real server code (files, uploads, downloads, ZIP, search, trash,
@@ -86,6 +86,6 @@ page waits until it finishes.
   browser checks in Chromium.
 - ✅ The ZIP writer is checked with Python's `zipfile`, including archives
   over 4 GB.
-- ⚠️ **Not yet run on a real Cardputer:** Wi‑Fi behaviour, the USB network
-  adapter and drive, the screen, battery reading, *Back to Launcher* and
-  self-update. 2.0 needs its first real-world test.
+- ✅ Runs on a real Cardputer ADV, installed through M5Launcher.
+- ⚠️ The original (non-ADV) Cardputer is untested. If you have one,
+  please [report how it goes](https://github.com/AFetisa/pocket-wui/issues/new/choose).

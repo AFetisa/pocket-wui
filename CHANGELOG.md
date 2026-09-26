@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.1.0
 
 **New**
 - Join Wi‑Fi from the Cardputer itself: press `w` on the main screen, pick a

@@ -5,7 +5,7 @@
 // ---------------------------------------------------------------------------
 
 #define WUI_NAME            "PocketWUI"
-#define WUI_FW_VERSION      "2.0.0"
+#define WUI_FW_VERSION      "2.1.0"
 
 #define WUI_HOSTNAME        "cardputer"          // -> http://cardputer.local (changeable in Settings)
 #define WUI_AP_PREFIX       "PocketWUI-"         // fallback access point: PocketWUI-<4 hex digits>

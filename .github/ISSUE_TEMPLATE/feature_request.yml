@@ -1,0 +1,20 @@
+name: Feature request
+description: Suggest something PocketWUI should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The problem or use case, not just the solution.
+    validations: { required: true }
+  - type: textarea
+    id: idea
+    attributes:
+      label: How would you like it to work?
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: Contributing
+      options:
+        - label: I'd like to build this myself (wait for a 👍 on this issue before opening a PR)
