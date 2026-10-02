@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.2.0
+
+**Changed**
+- Device screen text is twice as tall (16px Font2 instead of 8px Font0) for
+  readability. Long values are trimmed with `~`; the Wi‑Fi list shows 5 rows.
+
+**New**
+- Text size: press `+` / `-` on the main screen to step through three sizes
+  (16, 18 and 25px); the choice is remembered. Long values wrap instead of
+  being cut, and `;` `.` scroll the main screen when it overflows. QR screens
+  stay at the standard size.
+
 ## 2.1.0
 
 **New**

@@ -38,6 +38,8 @@ No Launcher? Flash `PocketWUI-full-flash.bin` at `0x0` with [esptool-js](https:/
 
 Forgot it? Hold the side button for 5 s to reset the password and Wi‑Fi (your files are kept).
 
+Text too small? Press **`+`** / **`-`** on the Cardputer's main screen for larger or smaller text (three sizes, remembered).
+
 ## More
 
 - **[Guide](docs/GUIDE.md)**: ways to connect, tips, M5Launcher, troubleshooting, privacy, test status

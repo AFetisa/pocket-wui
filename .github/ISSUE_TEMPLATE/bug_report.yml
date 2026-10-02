@@ -13,7 +13,7 @@ body:
     attributes:
       label: PocketWUI version
       description: Shown in Settings → Device, or the release you installed.
-      placeholder: "2.1.0"
+      placeholder: "2.2.0"
     validations: { required: true }
   - type: dropdown
     id: install
